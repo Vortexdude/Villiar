@@ -1,28 +1,59 @@
 from . import models
 from sqlalchemy.exc import IntegrityError
+import datetime
+from datetime import timedelta
+from Viliar.src.extensions.jwt import jwt
+from werkzeug.security import generate_password_hash, check_password_hash
+from functools import wraps
+from flask import request, abort
+
+
+def login_required(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        authorization = request.headers.get("Authorization", None)
+        if not authorization:
+            abort(403, message='no authorization token provided')
+
+        auth_type, token = authorization.split(' ')
+        if "Bearer" not in auth_type:
+            abort(403, message="Token type should be bearer")
+        try:
+            decoded_token = jwt.decode(token)
+            current_user = models.UserModel.get_by_email(email=decoded_token['identity'])
+            return f(*args, **kwargs, current_user=current_user)
+
+        except Exception as e:
+            abort(401, message="Invalid or expired token")
+
+    return wrapper
 
 
 class UserResource:
     def __init__(self, args):
         self.args = args
 
-    def login(self):
+    def login(self, password):
 
-        access_token = create_access_token(identity=self.args, fresh=True)
-        refresh_token = create_refresh_token(identity=self.args)
+        if not check_password_hash(password, self.args.password):
+            return {"code": 0, "msg": "error", "data": "Entered credentials are not correct"}
+
+        payload = {
+            "identity": self.args.email,
+            "exp": datetime.datetime.now(datetime.UTC) + timedelta(minutes=30)
+        }
+        token = jwt.encode(payload)
         data = {
-            "tokens": {
-                "refresh_token": refresh_token,
-                "access_token": access_token
-            }
+            "access_token": token
         }
         return {"code": 0, "msg": "success", "data": data}
 
     def register_user(self):
+        hashed_password = generate_password_hash(self.args.password)
         user = models.UserModel(
             username=self.args.username,
             email=self.args.email,
-            password=self.args.password,
+            password=hashed_password,
         )
         try:
             user.save_to_db()
@@ -38,8 +69,7 @@ class UserResource:
             {
                 "email": user.email,
                 "username": user.username,
-                "active": user.active,
-                "password": user.password
+                "active": user.active
             }
             for user in data
         ]
