@@ -17,13 +17,4 @@ class Api(BaseApi):
         self.spec.tag({"name": blp.name, "description": blp.description})
 
 
-spec_kwargs = {
-    "components": {
-        "securitySchemes": {
-            "api_key": {"type": "http", "scheme": "bearer", "bearerFormat": "JWT"},
-            "refresh_key": {"type": "http", "scheme": "bearer", "bearerFormat": "JWT"},
-        }
-    }
-}
-
-api = Api(spec_kwargs=spec_kwargs)
+api = Api()

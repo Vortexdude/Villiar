@@ -1,10 +1,10 @@
 from Viliar.src.extensions.marshal import ma
 from .models import UserModel
-
+from marshmallow import Schema, fields
 
 # from sqlalchemy.types import TypeDecorator, CHAR
 
-__all__ = ["UserLoginSchema", "UserRegisterSchema"]
+__all__ = ["UserLoginSchema", "UserRegisterSchema", "AuthSchema"]
 
 
 class BaseSchema(ma.SQLAlchemySchema):
@@ -31,3 +31,7 @@ class UserRegisterSchema(BaseSchema):
     class Meta(BaseSchema.Meta):
         #  Fields that need to be shown
         fields = ("username", "email", "password")
+
+
+class AuthSchema(Schema):
+    Authorization = fields.Str(required=True, description="JWT token in the form of 'Bearer <token>'")

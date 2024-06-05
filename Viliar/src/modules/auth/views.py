@@ -3,26 +3,55 @@ from .resources import UserResource
 from flask_smorest import abort
 from . import blp, models
 from .params import UserLoginSchema, UserRegisterSchema
+from .params import AuthSchema
+from werkzeug.security import generate_password_hash, check_password_hash
+from functools import wraps
+from flask import request
+import jwt
 
 
-from flask_bcrypt import Bcrypt
+def login_required(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        authorization = request.headers.get("Authorization", None)
+        if not authorization:
+            abort(403, message='no authorization token provided')
 
-bcrypt = Bcrypt()
+        auth_type, token = authorization.split(' ')
+        if "Bearer" not in auth_type:
+            abort(403, message="Token type should be bearer")
+        try:
+            decoded_token = jwt.decode(token, "SECRETKEY", algorithms="HS256")
+            current_user = models.UserModel.get_by_email(email=decoded_token['identity'])
+            return f(*args, **kwargs, current_user=current_user)
+
+        except Exception as e:
+            abort(401, message="Invalid or expired token")
+
+    return wrapper
 
 
-def check_password(hashed_password, password):
-    return bcrypt.check_password_hash(hashed_password, password)
-
-
-def get_password_hash(password):
-    return bcrypt.generate_password_hash(password).decode("utf-8")
+body = {
+    'name': 'Authorization',
+    'in': 'header',
+    'description': 'Authorization: Bearer <access_token>',
+    'required': 'true',
+    'default': "nothing",
+    'schema': {'type': 'string'}
+}
+timeout_field = {
+    'name': 'timeout',
+    'in': 'header',
+    'description': '3000 #paste your timeout session',
+    'required': 'true',
+    'default': "3000"
+}
 
 
 @blp.route("/login")
 class LoginViews(MethodView):
     @blp.arguments(UserLoginSchema)
     def post(self, args):
-        print(f"{args.password=}")
         if args.email is None or args.password is None:
             abort(404, message="Required email and password for login")
 
@@ -33,22 +62,40 @@ class LoginViews(MethodView):
 
         if not user.active:
             abort(403, message="User is not active.")
+        import datetime
+        from datetime import timedelta
 
-        if not check_password(user.password, args.password):
-            abort(401, message="User is not authenticate")
+        if check_password_hash(user.password, args.password):
+            payload = {
+                "identity": args.email,
+                "exp": datetime.datetime.now(datetime.UTC) + timedelta(minutes=30)
+            }
+            token = jwt.encode(payload, "SECRETKEY", algorithm="HS256")
+            data = {
+                "access_token": token
+            }
+            return {"code": 0, "msg": "success", "data": data}
 
-        return UserResource(args).login()
+
+@blp.route("/me")
+class Identity(MethodView):
+    @login_required
+    def get(self, current_user):
+        print(current_user)
+        return {"data": current_user}
 
 
 @blp.route("/register")
 class RegisterViews(MethodView):
     @blp.arguments(UserRegisterSchema, location="json")
     def post(self, args):
-        args.password = get_password_hash(args.password)
+        args.password = generate_password_hash(args.password)
         return UserResource(args).register_user()
 
 
 @blp.route("/get_all")
 class ViewUsersViews(MethodView):
+    @blp.doc(parameters=[body])
+    # @blp.arguments(AuthSchema, location='headers')
     def get(self):
         return UserResource.fetch_users()

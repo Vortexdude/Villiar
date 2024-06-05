@@ -23,6 +23,14 @@ class UserModel(Model):
         self.password = password
         self.active = active
 
+    def to_json(self):
+        return {
+            "email": self.email,
+            "username": self.username,
+            "user_id": self.user_id,
+            "is_active": self.active
+        }
+
     def save_to_db(self, commit=True):
         db.session.add(self)
         if commit:
@@ -30,7 +38,7 @@ class UserModel(Model):
 
     @classmethod
     def get_by_email(cls, email):
-        return cls.query.filter_by(email=email).first()
+        return cls.query.filter_by(email=email).all()[0]
 
     def __str__(self):
         return self.email

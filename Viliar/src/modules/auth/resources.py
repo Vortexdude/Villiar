@@ -1,11 +1,5 @@
 from . import models
 from sqlalchemy.exc import IntegrityError
-from flask_jwt_extended import (
-    create_access_token,
-    create_refresh_token,
-    decode_token,
-    get_jwt_identity
-)
 
 
 class UserResource:
@@ -14,8 +8,8 @@ class UserResource:
 
     def login(self):
 
-        access_token = create_access_token(identity=self.args.email)
-        refresh_token = create_refresh_token(identity=self.args.email)
+        access_token = create_access_token(identity=self.args, fresh=True)
+        refresh_token = create_refresh_token(identity=self.args)
         data = {
             "tokens": {
                 "refresh_token": refresh_token,
