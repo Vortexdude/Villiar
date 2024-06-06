@@ -1,8 +1,8 @@
 from . import models
 from sqlalchemy.exc import IntegrityError
-import datetime
-from datetime import timedelta
+from datetime import datetime, timedelta, UTC
 from Viliar.src.extensions.jwt import jwt
+from Viliar.src.extensions.jwt.exceptions import ExpiredSignatureError, DecodeError
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 from flask import request, abort
@@ -13,18 +13,21 @@ def login_required(f):
     def wrapper(*args, **kwargs):
         authorization = request.headers.get("Authorization", None)
         if not authorization:
-            abort(403, message='no authorization token provided')
+            abort(403, description='no authorization token provided')
 
         auth_type, token = authorization.split(' ')
         if "Bearer" not in auth_type:
-            abort(403, message="Token type should be bearer")
+            abort(403, description="Token type should be bearer")
         try:
             decoded_token = jwt.decode(token)
             current_user = models.UserModel.get_by_email(email=decoded_token['identity'])
             return f(*args, **kwargs, current_user=current_user)
 
-        except Exception as e:
-            abort(401, message="Invalid or expired token")
+        except ExpiredSignatureError as e:
+            abort(401, description="Token expired or invalid")
+
+        except DecodeError as e:
+            abort(400, description="Bad Request")
 
     return wrapper
 
@@ -40,7 +43,7 @@ class UserResource:
 
         payload = {
             "identity": self.args.email,
-            "exp": datetime.datetime.now(datetime.UTC) + timedelta(minutes=30)
+            "exp": datetime.now(UTC) + timedelta(minutes=30)
         }
         token = jwt.encode(payload)
         data = {

@@ -24,6 +24,9 @@ timeout_field = {
 @blp.route("/login")
 class LoginViews(MethodView):
     @blp.arguments(UserLoginSchema)
+    @blp.response(404, description="User Does not exist")
+    @blp.response(403, description="User password is wrong")
+    @blp.response(407, description="User is not activated")
     def post(self, args):
         if args.email is None or args.password is None:
             abort(404, message="Required email and password for login")
@@ -31,10 +34,10 @@ class LoginViews(MethodView):
         user = models.UserModel.get_by_email(args.email)
 
         if not user:
-            abort(404, message="Please Enter the correct email.")
+            abort(403, message="Please Enter the correct email.")
 
         if not user.active:
-            abort(403, message="User is not active.")
+            abort(407, message="User is not active.")
 
         return UserResource(args).login(user.password)
 
@@ -43,6 +46,8 @@ class LoginViews(MethodView):
 class Identity(MethodView):
 
     @blp.doc(parameters=[body])
+    @blp.response(403, description="no authorization token provided")
+    @blp.response(401, description="Invalid token")
     @login_required
     def get(self, current_user):
         return {"data": current_user.to_json()}
@@ -57,7 +62,9 @@ class RegisterViews(MethodView):
 
 @blp.route("/get_all")
 class ViewUsersViews(MethodView):
-    # @blp.doc(parameters=[body])
-    @blp.arguments(AuthSchema, location='headers')
-    def get(self):
+    @blp.doc(parameters=[body])
+    @blp.response(403, description="no authorization token provided")
+    @blp.response(401, description="Invalid token")
+    @login_required
+    def get(self, current_user):
         return UserResource.fetch_users()

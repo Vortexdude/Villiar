@@ -38,7 +38,8 @@ class UserModel(Model):
 
     @classmethod
     def get_by_email(cls, email):
-        return cls.query.filter_by(email=email).all()[0]
+        data = cls.query.filter_by(email=email).all()
+        return {} if len(data) < 1 else data[0]
 
     def __str__(self):
         return self.email
