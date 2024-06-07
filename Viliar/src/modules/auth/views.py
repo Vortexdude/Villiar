@@ -48,9 +48,10 @@ class Identity(MethodView):
     @blp.doc(parameters=[body])
     @blp.response(403, description="no authorization token provided")
     @blp.response(401, description="Invalid token")
+    @blp.response(200, description="Get Identity")
     @login_required
     def get(self, current_user):
-        return {"data": current_user.to_json()}
+        return {"data": current_user.to_json()}, 200
 
 
 @blp.route("/register")

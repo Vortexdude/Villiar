@@ -39,7 +39,7 @@ class UserResource:
     def login(self, password):
 
         if not check_password_hash(password, self.args.password):
-            return {"code": 0, "msg": "error", "data": "Entered credentials are not correct"}
+            return {"code": 0, "msg": "error", "data": "Entered credentials are not correct"}, 400
 
         payload = {
             "identity": self.args.email,
@@ -49,7 +49,7 @@ class UserResource:
         data = {
             "access_token": token
         }
-        return {"code": 0, "msg": "success", "data": data}
+        return {"code": 0, "msg": "success", "data": data}, 200
 
     def register_user(self):
         hashed_password = generate_password_hash(self.args.password)
