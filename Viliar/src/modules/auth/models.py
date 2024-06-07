@@ -1,21 +1,26 @@
 from sqlalchemy.dialects.postgresql import UUID
 from uuid import uuid4
 from Viliar.src.extensions.sqla.db_instance import db
-from Viliar.src.extensions.sqla import Model, SurrogatePK
+from Viliar.src.extensions.sqla import Model # SurrogatePK
 from sqlalchemy.types import Boolean
 
 
 __all__ = ["UserModel"]
 
 
-class UserModel(Model):
+class SurrogatePK(Model):
+    __abstract__ = True
+    id = db.Column(db.String, default=lambda: str(uuid4()), primary_key=True)
+
+
+class UserModel(SurrogatePK):
     __tablename__ = 'users'
 
-    user_id = db.Column(UUID, default=lambda: uuid4(), primary_key=True)
     username = db.Column(db.String, nullable=False, unique=True)
     email = db.Column(db.String)
     password = db.Column(db.String)
     active = db.Column(Boolean, nullable=True)
+    roles = db.relationship("Role", secondary="user_role", backref=db.backref('users', lazy='dynamic'))
 
     def __init__(self, username=None, email=None, password=None, active=True):
         self.username = username
@@ -43,3 +48,27 @@ class UserModel(Model):
 
     def __str__(self):
         return self.email
+
+
+class Role(SurrogatePK):
+    __tablename__ = "roles"
+
+    name = db.Column(db.String(50), nullable=False)
+    policies = db.relationship('Policy', backref='role', lazy=True)
+
+
+class Policy(SurrogatePK):
+    __tablename__ = 'policies'
+
+    name = db.Column(db.String(100), nullable=False)
+    resource = db.Column(db.String(100), nullable=False)
+    role_id = db.Column(db.String(50), db.ForeignKey('roles.id'), nullable=True)
+
+# user role association
+
+
+class UserRole(SurrogatePK):
+    __tablename__ = 'user_role'
+
+    user_id = db.Column(db.String, db.ForeignKey('users.id', ondelete='CASCADE'))
+    role_id = db.Column(db.String, db.ForeignKey('roles.id', ondelete='CASCADE'))

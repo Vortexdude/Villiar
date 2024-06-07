@@ -4,7 +4,6 @@ from .resources import UserResource, login_required
 from . import blp, models
 from .params import UserLoginSchema, UserRegisterSchema, AuthSchema
 
-
 body = {
     'name': 'Authorization',
     'in': 'header',
@@ -12,13 +11,21 @@ body = {
     'required': 'true',
     'default': "nothing",
 }
-timeout_field = {
-    'name': 'timeout',
-    'in': 'header',
-    'description': '3000 #paste your timeout session',
-    'required': 'true',
-    'default': "3000"
-}
+
+
+@blp.route("/create_admin_user")
+class RoleView(MethodView):
+    @blp.arguments(UserRegisterSchema, location="json")
+    def post(self, args):
+        if args.email is None or args.password is None:
+            abort(404, message="Required email and password for Creation")
+
+        user = models.UserModel.get_by_email(args.email)
+
+        if user:
+            abort(403, message="User is already exists")
+
+        return UserResource(args).create_admin_user()
 
 
 @blp.route("/login")
@@ -68,4 +75,4 @@ class ViewUsersViews(MethodView):
     @blp.response(401, description="Invalid token")
     @login_required
     def get(self, current_user):
-        return UserResource.fetch_users()
+        return UserResource.fetch_users(), 200

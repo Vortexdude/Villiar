@@ -1,8 +1,6 @@
 import datetime
-
 from .mixing import CRUDMix
 from .db_instance import db
-from sqlalchemy import DateTime, Boolean, Integer, Column
 from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()

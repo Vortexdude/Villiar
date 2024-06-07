@@ -65,6 +65,26 @@ class UserResource:
 
         return {"code": 0, "msg": "success", "data": user.email}
 
+    def create_admin_user(self):
+        hashed_password = generate_password_hash(self.args.password)
+        user = models.UserModel(
+            username=self.args.username,
+            email=self.args.email,
+            password=hashed_password,
+        )
+        try:
+            admin_policy = models.Policy(name='Admin_policy', resource='/admin/*')
+            guest_policy = models.Policy(name='Guest_policy', resource='/guest/*')
+            admin_role = models.Role(name='Admin')
+            admin_role.policies.extend([admin_policy, guest_policy])
+            user.roles.append(admin_role)
+            user.save_to_db()
+        except IntegrityError as e:
+            return {"code": 1, "msg": "Already Exists", "data": "User is already exist."}
+
+        return {"code": 0, "msg": "success", "data": user.email}
+
+
     @staticmethod
     def fetch_users() -> list[dict[str, str]]:
         data = models.UserModel.query.all()
