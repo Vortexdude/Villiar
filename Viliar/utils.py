@@ -42,8 +42,11 @@ class BaseParser(object):
 
         # if name not in self.existing_args.keys():
         #     raise NameErrorException(name)
-
-        value = self.existing_args.get(name, default)
+        if name not in self.existing_args.keys():
+            print(f"[WARNING]: Missing argument from the CLI using default {name}")
+            value = default
+        else:
+            value = self.existing_args.get(name, default)
 
         if type.lower() == 'string':
             if not isinstance(value, str):
@@ -52,12 +55,13 @@ class BaseParser(object):
 
         elif type.lower() == 'bool':
             bool_types = ['true', 'false', '0', '1']
-            if value.lower() not in bool_types:
-                raise WrongTypeCastingError(name, value, type.lower())
-            if value == '0':
-                value = False
-            if value == '1':
-                value = True
+            if not isinstance(value, bool):
+                if value.lower() not in bool_types:
+                    raise WrongTypeCastingError(name, value, type.lower())
+                if value == '0':
+                    value = False
+                if value == '1':
+                    value = True
             value = bool(value)
 
         elif type.lower() == 'int':
@@ -76,9 +80,7 @@ class BaseParser(object):
         pass
 
 
-bsg = BaseParser(check_env=True)
-bsg.add(name="host", type='string', default="0.0.0.0")
-bsg.add(name="port", type='int', default=582)
-bsg.add(name="debug", type='bool', default=False)
-
-print(bsg.arguments)
+# bsg = BaseParser(check_env=True)
+# bsg.add(name="host", type='string', default="0.0.0.0")
+# bsg.add(name="port", type='int', default=582)
+# bsg.add(name="debug", type='bool', default=False)

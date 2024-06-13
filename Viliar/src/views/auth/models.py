@@ -11,6 +11,7 @@ def now_in_utc() -> datetime:
     return datetime.now(tz=UTC)
 
 
+# Association table between roles and policies
 user_roles = Table(
     'user_roles', Base.metadata,
     Column('user_id', ForeignKey('public.users.id'), primary_key=True),
@@ -18,7 +19,6 @@ user_roles = Table(
     schema='public'
 )
 
-# Association table between roles and policies
 role_policies = Table(
     'role_policies', Base.metadata,
     Column('role_id', ForeignKey('public.roles.id'), primary_key=True),
@@ -70,6 +70,3 @@ class Policy(SurrogatePK, HelperMethods):
     name: Mapped[str] = mapped_column(String, unique=True)
     description: Mapped[str] = mapped_column(String)
     roles: Mapped[List["Role"]] = relationship("Role", secondary=role_policies, back_populates="policies")
-
-
-
