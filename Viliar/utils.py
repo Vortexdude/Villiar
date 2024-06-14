@@ -1,5 +1,6 @@
 import sys
 from typing import List
+from abc import ABC
 
 
 class NameErrorException(Exception):
@@ -8,15 +9,19 @@ class NameErrorException(Exception):
 
 
 class WrongTypeCastingError(ValueError):
-    def __init__(self, name, value, expected):
-        super().__init__(f"Expected type '{expected}' for argument '{name}', got {type(value).__name__}.")
+    def __init__(self, name, value, expected_type):
+        self.name = name
+        self.value = value
+        self.expected_type = expected_type
+
+        super().__init__(f"Cannot cast {name} (value: {value}) to {expected_type}")
 
 
 class UnsupportedTypeException(Exception):
-    def __init__(self, type, name):
-        super().__init__(f"Unsupported type '{type}' for argument '{name}'.")
-
-from abc import ABC
+    def __init__(self, expected_type, name):
+        self.expected_type = expected_type
+        self.name = name
+        super().__init__(f"Unsupported type {expected_type} for argument {name}")
 
 
 class BaseAbstract(ABC):
@@ -27,27 +32,53 @@ class BaseAbstract(ABC):
         pass
 
 
-def validate(name, type, value):
-    if type.lower() == 'string':
+def validate_argument(name, expected_type, value) -> int | str | bool:
+    """
+    Validate and cast the argument value to the expected type.
+
+    Args:
+        name (str): The name of the argument.
+        expected_type (str): The expected type of the argument ('string', 'int', or 'bool').
+        value (any): The value of the argument to validate and cast.
+
+    Returns:
+        int | str | bool: The value cast to the expected type.
+
+    Raises:
+        WrongTypeCastingError: If the value cannot be cast to the expected type.
+        UnsupportedTypeException: If the expected type is not supported.
+    """
+
+    if expected_type.lower() == 'string':
         if not isinstance(value, str):
-            raise WrongTypeCastingError(name, value, type.lower())
-        value = str(value)
-    elif type.lower() == 'int':
+            raise WrongTypeCastingError(name, value, expected_type.lower())
+        return str(value)
+
+    elif expected_type.lower() == 'int':
         if not isinstance(value, int):
-            raise WrongTypeCastingError(name, value, type.lower())
-        value = int(value)
+            try:
+                return int(value)
+            except ValueError:
+                raise WrongTypeCastingError(name, value, expected_type.lower())
 
-    elif type.lower() == 'bool':
-        BOOL_TYPES = ['true', 'false', '0', '1']
-        if not isinstance(value, bool):
-            if value not in BOOL_TYPES:
-                raise WrongTypeCastingError(name, value, type.lower())
-            if value == '0' or value == 'false':
-                value = False
-            if value == '1' or value == 'true':
-                value = True
+    elif expected_type.lower() == 'bool':
+        if isinstance(value, bool):
+            return bool(value)
 
-    return value
+        bool_str_mapping = {
+            'true': True,
+            'false': False,
+            '0': False,
+            '1': True
+        }
+        value_str = str(value).lower()
+        if value_str in bool_str_mapping:
+            return bool_str_mapping[value_str]
+        else:
+            raise WrongTypeCastingError(name, value, expected_type)
+
+    else:
+        raise UnsupportedTypeException(expected_type, name)
 
 
 class BaseParser(BaseAbstract):
@@ -73,44 +104,13 @@ class BaseParser(BaseAbstract):
         if not name:
             raise Exception("please pass the args name first")
 
-        # if name not in self.existing_args.keys():
-        #     raise NameErrorException(name)
         if name not in self.cli_arg.keys():
-            print(f"[WARNING]: Missing argument from the CLI using default {name}")
+            print(f"[WARNING]: Missing argument from the CLI using default {name} value {default}")
             value = default
         else:
             value = self.cli_arg.get(name, default)
 
-        if type.lower() == 'string':
-            if not isinstance(value, str):
-                raise WrongTypeCastingError(name, value, type.lower())
-            value = str(value)
-
-        elif type.lower() == 'bool':
-            bool_types = ['true', 'false', '0', '1']
-            if not isinstance(value, bool):
-                if value.lower() not in bool_types:
-                    raise WrongTypeCastingError(name, value, type.lower())
-                elif value == '0' or value == 'false':
-                    value = False
-                elif value == '1' or value == 'true':
-                    value = True
-
-        elif type.lower() == 'int':
-            if not isinstance(value, int):
-                try:
-                    value = int(value)
-                except ValueError:
-                    raise WrongTypeCastingError(name, value, type.lower())
-        else:
-            raise UnsupportedTypeException(type, name)
+        value = validate_argument(name=name, expected_type=type, value=value)
 
         _kvi = {name: value}
         self.arguments.update(_kvi)
-
-
-bsg = BaseParser(check_env=True)
-# bsg.add(name="host", type='string', default="0.0.0.0")
-# bsg.add(name="port", type='int', default=582)
-bsg.add(name="debug", type='bool', default=False)
-print(bsg.arguments)
