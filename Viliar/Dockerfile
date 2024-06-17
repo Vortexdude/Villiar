@@ -46,6 +46,7 @@ COPY ${projectHomeDirpath}alembic.ini ${PACKAGE_DIR}/alembic.ini
 COPY ${projectHomeDirpath}src ${PACKAGE_DIR}/src
 COPY ${projectHomeDirpath}app.py ${PACKAGE_DIR}/app.py
 COPY ${projectHomeDirpath}factory.py ${PACKAGE_DIR}/factory.py
+COPY ${projectHomeDirpath}utils.py ${PACKAGE_DIR}/utils.py
 COPY ${projectHomeDirpath}__init__.py ${PACKAGE_DIR}/__init__.py
 COPY ${projectHomeDirpath}scripts/run.sh ${PACKAGE_DIR}/scripts/run.sh
 
@@ -55,3 +56,4 @@ RUN chmod +x /entrypoint.sh
 
 # Set the entrypoint
 ENTRYPOINT [ "/entrypoint.sh"]
+CMD [ "tail", "-f", "/dev/null"]

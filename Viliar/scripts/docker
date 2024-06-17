@@ -1,0 +1,83 @@
+#!/usr/bin/env bash
+
+#set -ex
+
+function argparse() {
+    args=()
+    while [ "$1" != "" ]; do
+        case "$1" in
+          --action )
+            ACTION="$2";
+            shift
+            ;;
+          --host )
+            HOST="$2";
+            shift
+            ;;
+          --port )
+            PORT="$2";
+            shift
+            ;;
+          --debug )
+            DEBUG="$2";
+            shift
+            ;;
+          * )
+            args+=("$1");
+        esac
+        shift # move to the next key pair
+    done
+}
+
+argparse "$@"
+
+CURDIR=$(cd $(dirname $0) && pwd)
+PKG_DIR_PATH=$(cd $CURDIR/../ && pwd)
+package_name=$(basename $(realpath $PKG_DIR_PATH))
+docker_file="${PKG_DIR_PATH}/Dockerfile"
+docker_compose_file="${PKG_DIR_PATH}/docker-compose.yml"
+container_name=$(cut -d "-" -f3- <<< "${package_name}")
+docker_exec_cmd="docker exec -it"
+
+
+function print_info() {
+    echo "CURDIR = $CURDIR"
+    echo "PKG_DIR_PATH = $PKG_DIR_PATH"
+    echo "package_name = $package_name"
+    echo "docker_file = $docker_file"
+    echo "docker_compose_file = $docker_compose_file"
+}
+
+
+case "$ACTION" in
+  start)
+    echo "Starting continuous integration . . . "
+    HOST="$HOST" \
+    PORT="$PORT" \
+    DEBUG="$DEBUG" \
+    docker compose -f $docker_compose_file \
+    up --remove-orphans --build -d
+    ;;
+  stop)
+    echo "Stopping the container"
+    HOST="$HOST" \
+    PORT="$PORT" \
+    DEBUG="$DEBUG" \
+    docker compose -f $docker_compose_file \
+    down --remove-orphans
+    ;;
+  connect)
+    echo "Connecting the container $container_name - "
+    ${docker_exec_cmd} ${container_name} /bin/bash
+    ;;
+  run)
+    echo "Running  the container"
+    ;;
+  restart)
+    echo "Restarting docker containers"
+    docker compose restart
+    ;;
+  *)
+    echo "Unknown arg..."
+    ;;
+esac
