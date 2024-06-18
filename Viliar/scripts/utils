@@ -1,0 +1,91 @@
+#!/bin/bash
+
+##########################
+# Function: decrypt_data #
+##########################
+# Decrypts the data from the specified file using the private key and prints the result.
+#
+# Usage:
+#   decrypt_data [data_file]
+#
+# Parameters:
+#   data_file  -  Path to the file containing the data to be decrypted. Defaults to /tmp/ciphertext-ID.bin.
+#
+# Example:
+#   decrypt_data /tmp/encrypted_data.bin
+#
+# Notes:
+#   If the specified data file does not exist, the function prints an error message and exits.
+#   The function cleans up the decrypted data file after printing the decrypted content by calling the cleanup function.
+##########################
+function decrypt_data(){
+  local data_file=$1
+  local private_key=$2
+  [ ! -f "$data_file" ] && echo -e "[Error] Secret file $data_file doesnt exist" && exit 1
+  local data_content=$(cat $data_file)
+  local data=$(echo $data_content | sed 's/\ /\n/g' | base64 --decode | openssl pkeyutl -decrypt -inkey $private_key)
+  echo $data
+#  cleanup
+}
+
+##########################
+# Function: vcrypt #
+##########################
+# Encrypts the data from the specified file using the public key and outputs the result to a file.
+#
+# Usage:
+#   vcrypt <data_file> [output_file]
+#
+# Parameters:
+#   data_file    - Path to the file containing the data to be encrypted.
+#   output_file  - Path to the output file to store the encrypted data. Defaults to /tmp/ciphertext-ID.bin.
+#
+# Example:
+#   vcrypt $secret_file /tmp/encrypted_data.bin public_key_file_path
+#
+# Notes:
+#   If the specified data file does not exist, the function prints an error message and exits.
+##########################
+function encrypt_data(){
+  local data_file=$1
+  local public_key=$2
+  local output_file=$3
+  [ ! -f "$data_file" ] && echo -e "[Error] Secret file $data_file doesnt exist" && exit 1
+  local data=$(openssl pkeyutl -encrypt -pubin -in $data_file -inkey $public_key | base64 )
+  echo $data > $output_file
+}
+
+function data_parser() {
+    local data="$1"
+    IFS=',' read -ra kvpairs <<< "$data"
+    for kv in "${kvpairs[@]}"; do
+        export "$kv"
+    done
+}
+
+function argparse() {
+    args=()
+    while [ "$1" != "" ]; do
+        case "$1" in
+          --action )
+            ACTION="$2";
+            shift
+            ;;
+          --host )
+            HOST="$2";
+            shift
+            ;;
+          --port )
+            PORT="$2";
+            shift
+            ;;
+          --debug )
+            DEBUG="$2";
+            shift
+            ;;
+          * )
+            args+=("$1");
+        esac
+        shift # move to the next key pair
+    done
+}

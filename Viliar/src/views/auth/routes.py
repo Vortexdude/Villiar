@@ -27,3 +27,12 @@ class LoginUserViews(MethodView):
 
     def post(self):
         return jsonify({"Statu": "Done"})
+
+
+@blp.route("/get_all")
+class LoginUserViews(MethodView):
+    def post(self):
+        users = UserModel.get_all()
+        for user in users:
+            print(user.to_dict())
+        return jsonify({"Statu": "Done"})

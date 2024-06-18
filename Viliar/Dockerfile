@@ -5,6 +5,9 @@ ENV HOME /root
 ENV PYTHONPATH=${HOME}
 ENV USER python
 ENV PYTHONUNBUFFERED=1
+ENV HOST=${HOST}
+ENV PORT=${PORT}
+ENV DEBUG=${DEBUG}
 RUN adduser --system --no-create-home python
 WORKDIR /app
 #USER python

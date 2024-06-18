@@ -1,7 +1,7 @@
 from factory import create_app, MODULES
 from utils import BaseParser
 app = create_app(MODULES)
-base = BaseParser(check_env=True)
+base = BaseParser(check_env=False)
 base.add(name="host", type='string', default="0.0.0.0")
 base.add(name="port", type='int', default=5000)
 base.add(name="debug", type='bool', default=False)

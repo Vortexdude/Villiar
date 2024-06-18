@@ -1,6 +1,19 @@
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.orm import DeclarativeBase
-from sqlalchemy import inspect
+from sqlalchemy.orm import DeclarativeBase, sessionmaker
+from sqlalchemy import inspect, create_engine
+
+DATABASE_URL = "postgresql://viliar:botleneck@127.0.0.1/viliar"
+engine = create_engine(DATABASE_URL)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
 
 # Set up the flask-sqlalchemy extension for "new-style" models
 class Base(DeclarativeBase):
@@ -22,4 +35,3 @@ class HelperMethods:
         for k, v in data.items():
             setattr(self, k, v)
         return None
-

@@ -2,43 +2,20 @@
 
 #set -ex
 
-function argparse() {
-    args=()
-    while [ "$1" != "" ]; do
-        case "$1" in
-          --action )
-            ACTION="$2";
-            shift
-            ;;
-          --host )
-            HOST="$2";
-            shift
-            ;;
-          --port )
-            PORT="$2";
-            shift
-            ;;
-          --debug )
-            DEBUG="$2";
-            shift
-            ;;
-          * )
-            args+=("$1");
-        esac
-        shift # move to the next key pair
-    done
-}
-
-argparse "$@"
-
 CURDIR=$(cd $(dirname $0) && pwd)
 PKG_DIR_PATH=$(cd $CURDIR/../ && pwd)
 package_name=$(basename $(realpath $PKG_DIR_PATH))
+secret_file="${PKG_DIR_PATH}/.secrets"
+private_key="${PKG_DIR_PATH}/files/privkey-ID.pem"
+public_key="${PKG_DIR_PATH}/files/pubkey-Id.pem"
 docker_file="${PKG_DIR_PATH}/Dockerfile"
 docker_compose_file="${PKG_DIR_PATH}/docker-compose.yml"
+docker_compose_overwrite="${PKG_DIR_PATH}/docker-compose.override.yml"
 container_name=$(cut -d "-" -f3- <<< "${package_name}")
 docker_exec_cmd="docker exec -it"
+source "$CURDIR/utils"
 
+argparse "$@"
 
 function print_info() {
     echo "CURDIR = $CURDIR"
@@ -48,6 +25,8 @@ function print_info() {
     echo "docker_compose_file = $docker_compose_file"
 }
 
+decrypted_data=$(decrypt_data $secret_file $private_key)
+data_parser $decrypted_data
 
 case "$ACTION" in
   start)
@@ -55,7 +34,8 @@ case "$ACTION" in
     HOST="$HOST" \
     PORT="$PORT" \
     DEBUG="$DEBUG" \
-    docker compose -f $docker_compose_file \
+    PACKAGE_NAME="$package_name"\
+    docker compose -f $docker_compose_file -f $docker_compose_overwrite\
     up --remove-orphans --build -d
     ;;
   stop)
@@ -63,7 +43,8 @@ case "$ACTION" in
     HOST="$HOST" \
     PORT="$PORT" \
     DEBUG="$DEBUG" \
-    docker compose -f $docker_compose_file \
+    PACKAGE_NAME="$package_name"\
+    docker compose -f $docker_compose_file -f $docker_compose_overwrite\
     down --remove-orphans
     ;;
   connect)
