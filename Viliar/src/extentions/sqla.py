@@ -1,10 +1,12 @@
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 from sqlalchemy import inspect, create_engine
+from typing import Callable
+from Viliar.src.config import ConfigParser
 
-DATABASE_URL = "postgresql://viliar:botleneck@127.0.0.1/viliar"
+DATABASE_URL = ConfigParser().database_uri
 engine = create_engine(DATABASE_URL)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+SessionLocal: Callable = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 def get_db():

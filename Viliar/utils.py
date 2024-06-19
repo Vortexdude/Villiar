@@ -109,16 +109,17 @@ class BaseParser(BaseAbstract):
 
         if name in self.cli_arg.keys():
             value = self.cli_arg.get(name)
+            if not value:
+                value = default
+
         elif self.check_env:
             value = os.environ.get(name, default)
         try:
             value = validate_argument(name=name, expected_type=type, value=value)
         except (WrongTypeCastingError, UnsupportedTypeException) as e:
-            print(f"[Error] {e} using default")
+            print(f"[Error] {e} using default {default} type of value is")
             value = default
 
         _kvi = {name: value}
         self.arguments.update(_kvi)
 
-# base = BaseParser(check_env=True)
-# base.add(name="debug", type='bool', default=False)

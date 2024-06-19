@@ -1,20 +1,42 @@
 import os
 
 
-def get_env(name, default):
-    return os.environ.get(name, default)
+class ConfigParser(object):
+    @staticmethod
+    def _get_env(key: str, default: str) -> int | str:
+        return os.environ.get(key, default)
 
+    @property
+    def database_uri(self):
+        POSTGRES = {
+            'user': self._get_env('POSTGRES_USER', 'viliar'),
+            'pw': self._get_env('POSTGRES_PASSWORD', 'botleneck'),
+            'host': self._get_env('POSTGRES_HOST', '127.0.0.1'),
+            'db': self._get_env('POSTGRES_DB', 'viliar'),
+        }
+        if not POSTGRES['user']:
+            return self._get_env("SQLALCHEMY_DATABASE_URI", "sqlite:///database.db")
+        SQLALCHEMY_DATABASE_URI = "postgresql://%(user)s:%(pw)s@%(host)s/%(db)s" % POSTGRES
+        # os.environ['SQLALCHEMY_DATABASE_URI'] = SQLALCHEMY_DATABASE_URI
+        return SQLALCHEMY_DATABASE_URI
 
-database_uri = f"postgresql://viliar:botleneck@127.0.0.1/viliar"
+    @property
+    def jwt_secret_key(self):
+        return self._get_env('JWT_SECRET_KEY', 'supersecret')
 
-
-def database_url(driver='sqlite', host=None, username=None, password=None, database=None) -> str:
-    if 'sqlite' in driver.lower():
-        return "sqlite:///dev.db"
-    if not host or not username or not password or not database:
-        raise Exception("Please provide the sufficient credentials of the database")
-
-    return "{}://{}:{}@{}/{}".format(driver, username, password, host, database)
+    @property
+    def api_spec_option(self):
+        data = {'security': [{"bearerAuth": []}], 'components': {
+            "securitySchemes":
+                {
+                    "bearerAuth": {
+                        "type": "http",
+                        "scheme": "bearer",
+                        "bearerFormat": "JWT"
+                    }
+                }
+        }}
+        return data
 
 
 class Settings(object):
@@ -25,8 +47,8 @@ class Settings(object):
     OPENAPI_URL_PREFIX = "/"
     OPENAPI_SWAGGER_UI_PATH = "/swagger-ui"
     OPENAPI_SWAGGER_UI_URL = "https://cdn.jsdelivr.net/npm/swagger-ui-dist/"
-    # SQLALCHEMY_DATABASE_URI = "postgresql://viliar:botleneck@db/viliar"
-    SQLALCHEMY_DATABASE_URI = get_env('SQLALCHEMY_DATABASE_URI', database_url())
+    SQLALCHEMY_DATABASE_URI = ConfigParser().database_uri
     SQLALCHEMY_TRACK_MODIFICATION = "false"
-    JWT_SECRET_KEY = 'SECRETKEY'
+    JWT_SECRET_KEY = ConfigParser().jwt_secret_key
     JWT_TOKEN_LOCATION = 'headers'
+    API_SPEC_OPTIONS = ConfigParser().api_spec_option

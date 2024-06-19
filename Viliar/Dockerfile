@@ -44,7 +44,7 @@ RUN pip3 install --no-cache-dir -r ${PACKAGE_DIR}/requirements.txt
 
 # Copy application files
 
-COPY ${projectHomeDirpath}alembic ${PACKAGE_DIR}/alembic
+COPY ${projectHomeDirpath}migrations ${PACKAGE_DIR}/migrations
 COPY ${projectHomeDirpath}alembic.ini ${PACKAGE_DIR}/alembic.ini
 COPY ${projectHomeDirpath}src ${PACKAGE_DIR}/src
 COPY ${projectHomeDirpath}app.py ${PACKAGE_DIR}/app.py

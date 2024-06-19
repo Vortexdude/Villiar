@@ -4,29 +4,43 @@
 
 CURDIR=$(cd $(dirname $0) && pwd)
 PKG_DIR_PATH=$(cd $CURDIR/../ && pwd)
-package_name=$(basename $(realpath $PKG_DIR_PATH))
+export PACKAGE_NAME=$(basename $(realpath $PKG_DIR_PATH))
 secret_file="${PKG_DIR_PATH}/.secrets"
+secret_env_file="${PKG_DIR_PATH}/.env"
 private_key="${PKG_DIR_PATH}/files/privkey-ID.pem"
 public_key="${PKG_DIR_PATH}/files/pubkey-Id.pem"
 docker_file="${PKG_DIR_PATH}/Dockerfile"
 docker_compose_file="${PKG_DIR_PATH}/docker-compose.yml"
 docker_compose_overwrite="${PKG_DIR_PATH}/docker-compose.override.yml"
-container_name=$(cut -d "-" -f3- <<< "${package_name}")
+container_name=$(cut -d "-" -f3- <<< "${PACKAGE_NAME}")
 docker_exec_cmd="docker exec -it"
 source "$CURDIR/utils"
 
 argparse "$@"
 
-function print_info() {
-    echo "CURDIR = $CURDIR"
-    echo "PKG_DIR_PATH = $PKG_DIR_PATH"
-    echo "package_name = $package_name"
-    echo "docker_file = $docker_file"
-    echo "docker_compose_file = $docker_compose_file"
-}
-
+#encrypt_data $secret_env_file $public_key $secret_file
 decrypted_data=$(decrypt_data $secret_file $private_key)
 data_parser $decrypted_data
+
+function print_info() {
+    echo "HOST = $HOST"
+    echo "PORT = $PORT"
+    echo "DEBUG = $DEBUG"
+    echo "ACTION = $ACTION"
+    echo "CURDIR = $CURDIR"
+    echo "PKG_DIR_PATH = $PKG_DIR_PATH"
+    echo "PACKAGE_NAME = $PACKAGE_NAME"
+    echo "docker_file = $docker_file"
+    echo "docker_compose_file = $docker_compose_file"
+    echo "POSTGRES_DB = $POSTGRES_DB"
+    echo "POSTGRES_HOST = $POSTGRES_HOST"
+    [ ! -z $POSTGRES_PASSWORD ] && echo "POSTGRES_PASSWORD = ***" || echo "Password Not set"
+    echo "POSTGRES_USER = $POSTGRES_USER"
+    [ ! -z $JWT_SECRET_KEY ] && echo "JWT_SECRET_KEY = ***" || echo "Secret is Not set"
+}
+
+print_info
+#exit 1
 
 case "$ACTION" in
   start)
@@ -34,7 +48,6 @@ case "$ACTION" in
     HOST="$HOST" \
     PORT="$PORT" \
     DEBUG="$DEBUG" \
-    PACKAGE_NAME="$package_name"\
     docker compose -f $docker_compose_file -f $docker_compose_overwrite\
     up --remove-orphans --build -d
     ;;
@@ -43,7 +56,6 @@ case "$ACTION" in
     HOST="$HOST" \
     PORT="$PORT" \
     DEBUG="$DEBUG" \
-    PACKAGE_NAME="$package_name"\
     docker compose -f $docker_compose_file -f $docker_compose_overwrite\
     down --remove-orphans
     ;;
