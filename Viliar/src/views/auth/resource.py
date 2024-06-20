@@ -13,7 +13,7 @@ def login_required(f):
     def wrapper(*args, **kwargs):
         headers = request.headers.get('Authorization', None)
 
-        if not headers:
+        if not headers or len(headers.split(" ")) > 2:
             abort(403, description='no authorization token provided')
 
         token_type, token_data = headers.split(" ")
