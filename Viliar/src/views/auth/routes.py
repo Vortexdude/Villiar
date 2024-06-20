@@ -42,7 +42,7 @@ class LoginUserViews(MethodView):
 
 
 @blp.route("/get_all")
-class LoginUserViews(MethodView):
+class FetchUsersViews(MethodView):
 
     @login_required
     def post(self, current_user: UserModel):
