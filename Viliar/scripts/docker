@@ -40,22 +40,16 @@ function print_info() {
 }
 
 print_info
-#exit 1
+# exit 1
 
 case "$ACTION" in
   start)
     echo "Starting continuous integration . . . "
-    HOST="$HOST" \
-    PORT="$PORT" \
-    DEBUG="$DEBUG" \
     docker compose -f $docker_compose_file -f $docker_compose_overwrite\
     up --remove-orphans --build -d
     ;;
   stop)
     echo "Stopping the container"
-    HOST="$HOST" \
-    PORT="$PORT" \
-    DEBUG="$DEBUG" \
     docker compose -f $docker_compose_file -f $docker_compose_overwrite\
     down --remove-orphans
     ;;
