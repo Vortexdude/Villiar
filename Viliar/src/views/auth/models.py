@@ -45,7 +45,12 @@ class UserModel(SurrogatePK, HelperMethods):
     @classmethod
     def get_by_email(cls, email):
         users = db.query(cls).filter_by(email=email).all()
-        return {} if len(users) < 1 else users[0]
+        return {} if len(users) < 1 else users[0].to_dict()
+
+    @classmethod
+    def get_by_username(cls, username):
+        users = db.query(cls).filter_by(username=username).all()
+        return {} if len(users) < 1 else users[0].to_dict()
 
     def save_to_db(self):
         try:
@@ -60,6 +65,15 @@ class UserModel(SurrogatePK, HelperMethods):
     @classmethod
     def get_all(cls):
         return db.query(cls).all()
+
+    @staticmethod
+    def update_data(current_user, fullname=None, username=None, email=None, password=None, active=None):
+        current_user.fullname = fullname if fullname else current_user.fullname
+        current_user.username = username if username else current_user.username
+        current_user.email = email if email else current_user.email
+        current_user.password = password if password else current_user.password
+        current_user.active = active if active else current_user.active
+        db.commit()
 
 
 class Roles(SurrogatePK, HelperMethods):

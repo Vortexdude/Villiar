@@ -7,10 +7,11 @@ from datetime import datetime, UTC, timedelta
 from functools import wraps
 from flask import request, abort
 from .models import BlackListToken
+from typing import Callable
 
 
 def login_required(omit_token=False):
-    def main_wrapper(f):
+    def main_wrapper(f: Callable):
         @wraps(f)
         def wrapper(*args, **kwargs):
             headers = request.headers.get('Authorization', None)
@@ -81,7 +82,7 @@ class UserResource(object):
             abort(500, "Unknown Error from database side")
 
     @staticmethod
-    def get_all():
+    def get_all() -> list[dict]:
         users = UserModel.get_all()
         _users = [
             {
@@ -93,3 +94,15 @@ class UserResource(object):
             ]
         ]
         return _users
+
+    @classmethod
+    def get_by_username(cls, email) -> dict:
+        return UserModel.get_by_username(email)
+
+    @classmethod
+    def get_by_email(cls, email) -> dict:
+        return UserModel.get_by_email(email)
+
+    @classmethod
+    def update_data(cls, current_user, *args, **kwargs):
+        return UserModel.update_data(current_user, *args, **kwargs)
