@@ -2,9 +2,6 @@
 
 set -ex
 
-create_schema_hash="c229dfbbae52"
-data_injection_has="514833f6866d"
-
 
 CUR_DIR=$(cd "$(dirname "$0")" && pwd)
 PACKAGE_DIR="${CUR_DIR}/../"

@@ -1,0 +1,70 @@
+#!/usr/bin/env bash
+
+#set -ex
+
+CURDIR=$(cd $(dirname $0) && pwd)
+PKG_DIR_PATH=$(cd $CURDIR/../ && pwd)
+export PACKAGE_NAME=$(basename $(realpath $PKG_DIR_PATH))
+secret_file="${PKG_DIR_PATH}/.secrets"
+secret_env_file="${PKG_DIR_PATH}/.env"
+private_key="${PKG_DIR_PATH}/files/privkey-ID.pem"
+public_key="${PKG_DIR_PATH}/files/pubkey-Id.pem"
+docker_file="${PKG_DIR_PATH}/Dockerfile"
+docker_compose_file="${PKG_DIR_PATH}/docker-compose.yml"
+docker_compose_overwrite="${PKG_DIR_PATH}/docker-compose.override.yml"
+container_name=$(cut -d "-" -f3- <<< "${PACKAGE_NAME}")
+docker_exec_cmd="docker exec -it"
+source "$CURDIR/utils"
+
+argparse "$@"
+
+#encrypt_data $secret_env_file $public_key $secret_file
+decrypted_data=$(decrypt_data $secret_file $private_key)
+data_parser $decrypted_data
+
+function print_info() {
+    echo "HOST = $HOST"
+    echo "PORT = $PORT"
+    echo "DEBUG = $DEBUG"
+    echo "ACTION = $ACTION"
+    echo "CURDIR = $CURDIR"
+    echo "PKG_DIR_PATH = $PKG_DIR_PATH"
+    echo "PACKAGE_NAME = $PACKAGE_NAME"
+    echo "docker_file = $docker_file"
+    echo "docker_compose_file = $docker_compose_file"
+    echo "POSTGRES_DB = $POSTGRES_DB"
+    echo "POSTGRES_HOST = $POSTGRES_HOST"
+    [ ! -z $POSTGRES_PASSWORD ] && echo "POSTGRES_PASSWORD = ***" || echo "Password Not set"
+    echo "POSTGRES_USER = $POSTGRES_USER"
+    [ ! -z $JWT_SECRET_KEY ] && echo "JWT_SECRET_KEY = ***" || echo "Secret is Not set"
+}
+
+print_info
+# exit 1
+
+case "$ACTION" in
+  start)
+    echo "Starting continuous integration . . . "
+    docker compose -f $docker_compose_file -f $docker_compose_overwrite\
+    up --remove-orphans --build -d
+    ;;
+  stop)
+    echo "Stopping the container"
+    docker compose -f $docker_compose_file -f $docker_compose_overwrite\
+    down --remove-orphans
+    ;;
+  connect)
+    echo "Connecting the container $container_name - "
+    ${docker_exec_cmd} ${container_name} /bin/bash
+    ;;
+  run)
+    echo "Running  the container"
+    ;;
+  restart)
+    echo "Restarting docker containers"
+    docker compose restart
+    ;;
+  *)
+    echo "Unknown arg..."
+    ;;
+esac

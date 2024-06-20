@@ -15,5 +15,3 @@ def create_app(modules, config=None):
     register_blueprints(app)
 
     return app
-
-

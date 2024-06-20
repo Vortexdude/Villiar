@@ -13,10 +13,13 @@ services:
     ports:
       - "5000:5000"
     environment:
-      - FLASK_ENV=development
+       FLASK_ENV: development
+       HOST: ${HOST:-0.0.0.0}
+       PORT: ${PORT:-5000}
+       DEBUG: ${DEBUG:-0}
   db:
     image: postgres:13
-    container_name: viliar-db
+    container_name: Viliar-db
     ports:
       - "5432:5432"
     environment:

@@ -1,3 +1,4 @@
+import os
 import sys
 from typing import List
 from abc import ABC
@@ -102,15 +103,23 @@ class BaseParser(BaseAbstract):
 
     def add(self, name=None, type='string', alias=None, default=None):
         if not name:
-            raise Exception("please pass the args name first")
+            raise Exception("Please pass the argument name first.")
 
-        if name not in self.cli_arg.keys():
-            print(f"[WARNING]: Missing argument from the CLI using default {name} value {default}")
+        value = default
+
+        if name in self.cli_arg.keys():
+            value = self.cli_arg.get(name)
+            if not value:
+                value = default
+
+        elif self.check_env:
+            value = os.environ.get(name, default)
+        try:
+            value = validate_argument(name=name, expected_type=type, value=value)
+        except (WrongTypeCastingError, UnsupportedTypeException) as e:
+            print(f"[Error] {e} using default {default} type of value is")
             value = default
-        else:
-            value = self.cli_arg.get(name, default)
-
-        value = validate_argument(name=name, expected_type=type, value=value)
 
         _kvi = {name: value}
         self.arguments.update(_kvi)
+
