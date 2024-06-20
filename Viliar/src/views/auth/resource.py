@@ -6,32 +6,41 @@ from jwt import encode, decode, ExpiredSignatureError, DecodeError
 from datetime import datetime, UTC, timedelta
 from functools import wraps
 from flask import request, abort
+from .models import BlackListToken
 
 
-def login_required(f):
-    @wraps(f)
-    def wrapper(*args, **kwargs):
-        headers = request.headers.get('Authorization', None)
+def login_required(omit_token=False):
+    def main_wrapper(f):
+        @wraps(f)
+        def wrapper(*args, **kwargs):
+            headers = request.headers.get('Authorization', None)
 
-        if not headers or len(headers.split(" ")) > 2:
-            abort(403, description='no authorization token provided')
+            if not headers or len(headers.split(" ")) > 2:
+                abort(403, description='no authorization token provided')
 
-        token_type, token_data = headers.split(" ")
-        identity = jwt.decode(token_data)
-        if "Bearer" not in token_type:
-            abort(403, description="Token type should be bearer")
-        try:
+            token_type, token_data = headers.split(" ")
             identity = jwt.decode(token_data)
-            current_user = UserModel.get_by_email(email=identity['identity'])
-            return f(*args, **kwargs, current_user=current_user)
 
-        except ExpiredSignatureError as e:
-            abort(401, description="Token expired or invalid")
+            if "Bearer" not in token_type:
+                abort(403, description="Token type should be bearer")
 
-        except DecodeError as e:
-            abort(400, description="Bad Request")
+            try:
+                if BlackListToken(token_data).check_blacklist():
+                    abort(401, description="Token is blacklisted please login again")
 
-    return wrapper
+                identity = jwt.decode(token_data)
+                current_user = UserModel.get_by_email(email=identity['identity'])
+                if omit_token:
+                    return f(*args, **kwargs, token=token_data)
+                return f(*args, **kwargs, current_user=current_user)
+
+            except ExpiredSignatureError as e:
+                abort(401, description="Token expired or invalid")
+
+            except DecodeError as e:
+                abort(400, description="Bad Request")
+        return wrapper
+    return main_wrapper
 
 
 class UserResource(object):
@@ -61,6 +70,15 @@ class UserResource(object):
             "access_token": token
         }
         return {"code": 0, "msg": "success", "data": data}, 200
+
+    @staticmethod
+    def logout(token):
+        try:
+            blacklist_token = BlackListToken(token=token)
+            blacklist_token.save_to_db()
+            return {'status': 'success', 'message': 'Successfully logged out.'}
+        except Exception as e:
+            abort(500, "Unknown Error from database side")
 
     @staticmethod
     def get_all():

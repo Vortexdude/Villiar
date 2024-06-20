@@ -41,10 +41,20 @@ class LoginUserViews(MethodView):
         return UserResource(args).login(user.password)
 
 
+@blp.route("/logout")
+class LogoutView(MethodView):
+
+    @login_required(omit_token=True)
+    def post(self, token: str):
+        return UserResource.logout(token)
+
+
 @blp.route("/get_all")
 class FetchUsersViews(MethodView):
-
-    @login_required
+    @blp.response(403, description="no authorization token provided")
+    @blp.response(401, description="Invalid token")
+    @blp.response(200, description="Get Identity")
+    @login_required()
     def post(self, current_user: UserModel):
         print(current_user.email)
         users: list = UserResource.get_all()

@@ -28,10 +28,10 @@ class UserModel(SurrogatePK, HelperMethods):
     password: Mapped[str] = mapped_column(String, nullable=False)
     active: Mapped[bool] = mapped_column(Boolean, nullable=False)
     created_datatime: Mapped[datetime] = mapped_column(
-        DateTime, default=now_in_utc, onupdate=now_in_utc,nullable=False
+        DateTime, default=now_in_utc, onupdate=now_in_utc, nullable=False
     )
     last_login: Mapped[Optional[datetime]] = mapped_column(
-        DateTime, default=now_in_utc, onupdate=now_in_utc,nullable=True
+        DateTime, default=now_in_utc, onupdate=now_in_utc, nullable=True
     )  # New field
 
     def __init__(self, username, email, password, active=True, fullname=None, **kw: Any):
@@ -57,7 +57,6 @@ class UserModel(SurrogatePK, HelperMethods):
         db.add(self)
         db.commit()
 
-
     @classmethod
     def get_all(cls):
         return db.query(cls).all()
@@ -69,3 +68,31 @@ class Roles(SurrogatePK, HelperMethods):
     name: Mapped[str] = mapped_column(String(50))
     description: Mapped[str] = mapped_column(String(150))
     paths: Mapped[str] = mapped_column(String(50))
+
+
+class BlackListToken(SurrogatePK, HelperMethods):
+    __tablename__ = 'blacklist_tokens'
+
+    token: Mapped[str] = mapped_column(String, nullable=False)
+    blacklisted_on: Mapped[DateTime] = mapped_column(DateTime, default=now_in_utc, onupdate=now_in_utc, nullable=False)
+
+    def __init__(self, token, **kwargs: Any):
+        super().__init__(**kwargs)
+        self.token = token
+
+    def save_to_db(self):
+        try:
+            db.add(self)
+            db.commit()
+        except PendingRollbackError:
+            db.rollback()
+
+        db.add(self)
+        db.commit()
+
+    # def __repr__(self):
+    #     return f"<id: token {self.token}>"
+
+    def check_blacklist(self):
+        res = db.query(BlackListToken).filter_by(token=self.token).all()
+        return True if res else False
