@@ -3,35 +3,14 @@ from flask.views import MethodView
 from flask import jsonify, abort
 from .models import UserModel
 from .resource import UserResource, login_required
-from marshmallow import Schema, fields
-
-
-class UserUpdateSchema(Schema):
-    email = fields.String(required=False)
-    password = fields.String(required=False)
-    fullname = fields.String(required=False)
-
-
-class UserRegisterSchema(Schema):
-    username = fields.String(required=True)
-    email = fields.String(required=True)
-    password = fields.String(required=True)
-    fullname = fields.String(required=False)
-
-
-class UserLoginSchema(Schema):
-    email = fields.String(required=True)
-    password = fields.String(required=True)
-
-
-class SomeSchemas(Schema):
-    email = fields.String(required=True)
+from .schema import UserLoginSchema, UserRegisterSchema, UserUpdateSchema
 
 
 @blp.route("/users/new")
 class LoginAPIView(MethodView):
     @blp.arguments(UserRegisterSchema)
     def post(self, args):
+        """Register new user"""
         user = UserResource(args)
         new_user = user.register()
         return jsonify(new_user)
@@ -52,6 +31,7 @@ class FetchUsersViews(MethodView):
     @login_required()
     def post(self, *args, **kwargs):
         """Update the given user Information"""
+        new_data = {}
         for arg in args:
             if not isinstance(arg, dict) or not arg:
                 return jsonify({"status": "No data found"}), 203
@@ -61,7 +41,8 @@ class FetchUsersViews(MethodView):
         user = UserResource.get_by_username(username)
         if not user:
             return jsonify({"status": "Username not matched"}), 203
-        # UserResource.update_data(identity, **new_data)
+        new_data['username'] = username
+        UserResource.update_data(**new_data)
         return {"data": "looks good."}
         # return user
 
@@ -70,14 +51,14 @@ class FetchUsersViews(MethodView):
 class LoginUserViews(MethodView):
     @blp.arguments(UserLoginSchema)
     def post(self, args):
+        """Login route for the user"""
         if 'email' not in args or 'password' not in args:
             abort(407, 'Please provide the email and password')
-
-        user = UserModel.get_by_email(args['email'])
+        user = UserModel.get_by_email(args['email'], populate_pass=True)
         if not user:
             abort(404, 'User does not exist in the database')
 
-        return UserResource(args).login(user.password)
+        return UserResource(args).login(user['password'])
 
 
 @blp.route("/logout")
@@ -85,4 +66,5 @@ class LogoutView(MethodView):
 
     @login_required(omit_token=True)
     def post(self, token: str):
+        """Logout the user add token in the blacklist table"""
         return UserResource.logout(token)

@@ -28,10 +28,10 @@ db = SQLAlchemy(model_class=Base)
 class HelperMethods:
 
     # dynamically get all the attributes of a model
-    def to_dict(self) -> dict[str, str]:
+    def to_dict(self, populate_password=False) -> dict[str, str]:
         """Return a model as a dictionary."""
         data = {c.key: getattr(self, c.key) for c in inspect(self).mapper.column_attrs}
-        if 'password' in data:
+        if not populate_password and 'password' in data:
             data.pop('password')
         return data
 

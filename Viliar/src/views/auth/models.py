@@ -31,7 +31,7 @@ class UserModel(SurrogatePK, HelperMethods):
         DateTime, default=now_in_utc, onupdate=now_in_utc, nullable=False
     )
     last_login: Mapped[Optional[datetime]] = mapped_column(
-        DateTime, default=now_in_utc, onupdate=now_in_utc, nullable=True
+        DateTime, default=now_in_utc, onupdate=now_in_utc, nullable=False
     )  # New field
 
     def __init__(self, username, email, password, active=True, fullname=None, **kw: Any):
@@ -43,14 +43,20 @@ class UserModel(SurrogatePK, HelperMethods):
         self.active = active
 
     @classmethod
-    def get_by_email(cls, email):
-        users = db.query(cls).filter_by(email=email).all()
-        return {} if len(users) < 1 else users[0].to_dict()
+    def get_by_email(cls, email, populate_pass=False, obj=False) -> object | dict:
+        user = db.query(cls).filter_by(email=email).first()
+        if user:
+            return user if obj else user.to_dict(populate_pass)
+        else:
+            return {}
 
     @classmethod
-    def get_by_username(cls, username):
-        users = db.query(cls).filter_by(username=username).all()
-        return {} if len(users) < 1 else users[0].to_dict()
+    def get_by_username(cls, username, populate_pass=False, obj=False) -> object | dict:
+        user = db.query(cls).filter_by(username=username).first()
+        if user:
+            return user if obj else user.to_dict(populate_pass)
+        else:
+            return {}
 
     def save_to_db(self):
         try:
@@ -63,17 +69,30 @@ class UserModel(SurrogatePK, HelperMethods):
         db.commit()
 
     @classmethod
+    def login(cls, email):
+        user = cls.get_by_email(email=email, obj=True)
+        print(now_in_utc())
+        user.last_login = now_in_utc()
+        db.commit()
+
+    @classmethod
     def get_all(cls):
         return db.query(cls).all()
 
-    @staticmethod
-    def update_data(current_user, fullname=None, username=None, email=None, password=None, active=None):
+    @classmethod
+    def update_data(cls, fullname=None, username=None, email=None, password=None, active=None):
+        from werkzeug.security import generate_password_hash
+        current_user = db.query(cls).filter_by(username=username).first()
         current_user.fullname = fullname if fullname else current_user.fullname
         current_user.username = username if username else current_user.username
         current_user.email = email if email else current_user.email
-        current_user.password = password if password else current_user.password
+        current_user.password = generate_password_hash(password) if password else current_user.password
         current_user.active = active if active else current_user.active
-        db.commit()
+
+        try:
+            db.commit()
+        except Exception as e:
+            raise Exception("Error with the database.")
 
 
 class Roles(SurrogatePK, HelperMethods):

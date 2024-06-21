@@ -10,20 +10,26 @@ from .models import BlackListToken
 from typing import Callable
 
 
+def validate_headers(name='Authorization') -> tuple[str, str]:
+    headers = request.headers.get(name, None)
+
+    if not headers or len(headers.split(" ")) > 2:
+        abort(403, description='no authorization token provided')
+
+    token_type, token_data = headers.split(" ")
+
+    if "Bearer" not in token_type:
+        abort(403, description="Token type should be bearer")
+
+    return token_type, token_data
+
+
 def login_required(omit_token=False):
     def main_wrapper(f: Callable):
         @wraps(f)
         def wrapper(*args, **kwargs):
-            headers = request.headers.get('Authorization', None)
 
-            if not headers or len(headers.split(" ")) > 2:
-                abort(403, description='no authorization token provided')
-
-            token_type, token_data = headers.split(" ")
-            identity = jwt.decode(token_data)
-
-            if "Bearer" not in token_type:
-                abort(403, description="Token type should be bearer")
+            token_type, token_data = validate_headers()
 
             try:
                 if BlackListToken(token_data).check_blacklist():
@@ -70,6 +76,9 @@ class UserResource(object):
         data = {
             "access_token": token
         }
+
+        UserModel.login(email=self.args['email'])
+
         return {"code": 0, "msg": "success", "data": data}, 200
 
     @staticmethod
@@ -104,5 +113,5 @@ class UserResource(object):
         return UserModel.get_by_email(email)
 
     @classmethod
-    def update_data(cls, current_user, *args, **kwargs):
-        return UserModel.update_data(current_user, *args, **kwargs)
+    def update_data(cls, *args, **kwargs):
+        return UserModel.update_data(*args, **kwargs)
