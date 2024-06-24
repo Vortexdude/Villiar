@@ -13,10 +13,35 @@ def now_in_utc() -> datetime:
     return datetime.now(tz=UTC)
 
 
+role_associations = Table(
+    'role_associations',
+    Base.metadata,
+    Column('user_id', String, ForeignKey('users.id'), primary_key=True),
+    Column('role_id', String, ForeignKey('roles.id'), primary_key=True)
+)
+
+
 class SurrogatePK(Base):
     __abstract__ = True
 
     id: Mapped[str] = mapped_column(String, default=lambda: str(uuid4()), primary_key=True, nullable=False)
+
+
+class Role(SurrogatePK, HelperMethods):
+    __tablename__ = 'roles'
+
+    name: Mapped[str] = mapped_column(String(50))
+    description: Mapped[str] = mapped_column(String(150))
+    paths: Mapped[str] = mapped_column(String(50))
+    users: Mapped[List["UserModel"]] = relationship(
+        "UserModel", secondary=role_associations, back_populates='roles'
+    )
+
+    def __init__(self, name, description, paths, **kwargs):
+        super().__init__(**kwargs)
+        self.name = name
+        self.description = description
+        self.paths = paths
 
 
 class UserModel(SurrogatePK, HelperMethods):
@@ -32,7 +57,11 @@ class UserModel(SurrogatePK, HelperMethods):
     )
     last_login: Mapped[Optional[datetime]] = mapped_column(
         DateTime, default=now_in_utc, onupdate=now_in_utc, nullable=False
-    )  # New field
+    )
+
+    roles: Mapped[List["Role"]] = relationship(
+        "Role", secondary=role_associations, back_populates='users'
+    )
 
     def __init__(self, username, email, password, active=True, fullname=None, **kw: Any):
         super().__init__(**kw)
@@ -93,14 +122,6 @@ class UserModel(SurrogatePK, HelperMethods):
             db.commit()
         except Exception as e:
             raise Exception("Error with the database.")
-
-
-class Roles(SurrogatePK, HelperMethods):
-    __tablename__ = 'roles'
-
-    name: Mapped[str] = mapped_column(String(50))
-    description: Mapped[str] = mapped_column(String(150))
-    paths: Mapped[str] = mapped_column(String(50))
 
 
 class BlackListToken(SurrogatePK, HelperMethods):

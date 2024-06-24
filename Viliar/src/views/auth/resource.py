@@ -1,12 +1,11 @@
 from Viliar.src.extentions.jwt import jwt
-from .models import UserModel
+from .models import UserModel, BlackListToken, Role
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy.exc import IntegrityError
 from jwt import encode, decode, ExpiredSignatureError, DecodeError
 from datetime import datetime, UTC, timedelta
 from functools import wraps
 from flask import request, abort
-from .models import BlackListToken
 from typing import Callable
 
 
@@ -115,3 +114,28 @@ class UserResource(object):
     @classmethod
     def update_data(cls, *args, **kwargs):
         return UserModel.update_data(*args, **kwargs)
+
+    @staticmethod
+    def create_admin():
+        admin_user = UserModel(
+            email="nitin@gmail.com",
+            username="nnamdev",
+            fullname="Nitin Namdev",
+            password="string",
+            active=True
+        )
+        admin_role = Role(
+            name="Admin",
+            description="Admin Role for Administrator Operations",
+            paths="/admin/*"
+        )
+        guest_role = Role(
+            name="Guest",
+            description="Guest Role for Normal Operations",
+            paths="/[!admin]*"
+        )
+        admin_user.roles.extend([admin_role, guest_role])
+        from Viliar.src.extentions.sqla import get_db
+        db = next(get_db())
+        db.add(admin_user)
+        db.commit()

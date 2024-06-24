@@ -6,6 +6,14 @@ from .resource import UserResource, login_required
 from .schema import UserLoginSchema, UserRegisterSchema, UserUpdateSchema
 
 
+@blp.route("/admin/")
+class CreateAdminUser(MethodView):
+    def post(self):
+        """create new Admin user"""
+        user = UserResource.create_admin()
+        return jsonify(user)
+
+
 @blp.route("/users/new")
 class LoginAPIView(MethodView):
     @blp.arguments(UserRegisterSchema)
