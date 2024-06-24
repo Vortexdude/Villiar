@@ -71,6 +71,10 @@ function argparse() {
             export ACTION="$2";
             shift
             ;;
+          --count )
+            export WORKER_COUNT="$2";
+            shift
+            ;;
           --host )
             export HOST="$2";
             shift

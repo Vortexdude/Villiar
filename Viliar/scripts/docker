@@ -23,6 +23,7 @@ decrypted_data=$(decrypt_data $secret_file $private_key)
 data_parser $decrypted_data
 
 function print_info() {
+    echo "WORKER_COUNT = $WORKER_COUNT"
     echo "HOST = $HOST"
     echo "PORT = $PORT"
     echo "DEBUG = $DEBUG"
