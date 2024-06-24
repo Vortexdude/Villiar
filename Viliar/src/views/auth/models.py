@@ -2,7 +2,7 @@ from Viliar.src.extentions.sqla import HelperMethods, Base, get_db
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import String, Boolean, Table, Column, ForeignKey, DateTime
 from uuid import uuid4
-from datetime import datetime, UTC
+from datetime import datetime, UTC, date
 from typing import List, Optional, Any
 from sqlalchemy.exc import PendingRollbackError
 db = next(get_db())
@@ -28,7 +28,7 @@ class UserModel(SurrogatePK, HelperMethods):
     password: Mapped[str] = mapped_column(String, nullable=False)
     active: Mapped[bool] = mapped_column(Boolean, nullable=False)
     created_datatime: Mapped[datetime] = mapped_column(
-        DateTime, default=now_in_utc, onupdate=now_in_utc, nullable=False
+        DateTime, default=now_in_utc, nullable=False
     )
     last_login: Mapped[Optional[datetime]] = mapped_column(
         DateTime, default=now_in_utc, onupdate=now_in_utc, nullable=False

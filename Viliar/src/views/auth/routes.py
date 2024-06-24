@@ -43,8 +43,7 @@ class FetchUsersViews(MethodView):
             return jsonify({"status": "Username not matched"}), 203
         new_data['username'] = username
         UserResource.update_data(**new_data)
-        return {"data": "looks good."}
-        # return user
+        return UserResource.get_by_username(username)
 
 
 @blp.route("/login")
