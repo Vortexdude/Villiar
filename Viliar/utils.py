@@ -123,3 +123,61 @@ class BaseParser(BaseAbstract):
         _kvi = {name: value}
         self.arguments.update(_kvi)
 
+
+class ConfigParser(object):
+
+    def __init__(self):
+        self._admin_pass = self._get_env('ADMIN_PASS', 'secret')
+        self._guest_pass = self._get_env('GUEST_PASS', 'supersecret')
+        self._jwt_secret_key = self._get_env('JWT_SECRET_KEY', 'supersecret')
+        self._pg_user = self._get_env('POSTGRES_USER', 'viliar')
+        self._pg_pass = self._get_env('POSTGRES_PASSWORD', 'botleneck')
+        self._pg_db = self._get_env('POSTGRES_DB', 'viliar')
+        self._pg_host = self._get_env('POSTGRES_HOST', '127.0.0.1')
+        basedir = os.path.abspath(os.path.dirname(__file__))
+        self._sqlite_uri = 'sqlite:///' + os.path.join(basedir, 'database.db')
+
+    @staticmethod
+    def _get_env(key: str, default: str) -> int | str:
+        return os.environ.get(key, default)
+
+    @property
+    def admin_pass(self) -> str:
+        return self._admin_pass
+
+    @property
+    def guest_pass(self) -> str:
+        return self._guest_pass
+
+    @property
+    def jwt_secret_key(self) -> str:
+        return self._jwt_secret_key
+
+    @property
+    def database_uri(self):
+        POSTGRES = {
+            'user': self._pg_user,
+            'pw': self._pg_pass,
+            'host': self._pg_host,
+            'db': self._pg_db,
+        }
+        if not POSTGRES['user']:
+            return self._get_env("SQLALCHEMY_DATABASE_URI", self._sqlite_uri)
+        SQLALCHEMY_DATABASE_URI = "postgresql://%(user)s:%(pw)s@%(host)s/%(db)s" % POSTGRES
+        # os.environ['SQLALCHEMY_DATABASE_URI'] = SQLALCHEMY_DATABASE_URI
+        return SQLALCHEMY_DATABASE_URI
+
+    @property
+    def api_spec_option(self):
+        data = {'security': [{"bearerAuth": []}], 'components': {
+            "securitySchemes":
+                {
+                    "bearerAuth": {
+                        "type": "http",
+                        "scheme": "bearer",
+                        "bearerFormat": "JWT"
+                    }
+                }
+        }}
+        return data
+

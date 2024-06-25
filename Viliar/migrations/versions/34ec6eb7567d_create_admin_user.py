@@ -1,26 +1,35 @@
-"""created admin user
+"""Create admin user
 
-Revision ID: 7c3a7651ff9e
-Revises: c52ed9b1bb31
-Create Date: 2024-06-24 23:15:19.123265
+Revision ID: 34ec6eb7567d
+Revises: 8ee7e990a280
+Create Date: 2024-06-25 18:09:41.211558
 
 """
 from typing import Sequence, Union
 from uuid import uuid4
-from alembic import op
+from alembic import op, context
 import sqlalchemy as sa
 from datetime import datetime, UTC
+from sqlalchemy.orm import Session
+from werkzeug.security import generate_password_hash
+from Viliar.src.views.auth.models import UserModel, Role
+
 
 # revision identifiers, used by Alembic.
-revision: str = '7c3a7651ff9e'
-down_revision: Union[str, None] = 'c52ed9b1bb31'
+revision: str = '34ec6eb7567d'
+down_revision: Union[str, None] = '8ee7e990a280'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
+
+config = context.get_context().config
+admin_password = config.get_main_option('admin_pass')
+guest_password = config.get_main_option('guest_pass')
 
 
 def now_in_utc() -> datetime:
     """Current time in UTC"""
     return datetime.now(tz=UTC)
+
 
 # ------- define all the tables - - - - - -
 
@@ -60,7 +69,7 @@ admin_user = dict(
     email="admin@viliar.com",
     username="Admin",
     fullname="Viliar Dev",
-    password="moyom#234",
+    password=generate_password_hash(admin_password),
     active=True,
     created_datatime=now_in_utc(),
     last_login=now_in_utc()
@@ -71,7 +80,7 @@ guest_user = dict(
     email="nitin@gmail.com",
     username="nnamdev",
     fullname="Nitin Namdev",
-    password="string",
+    password=generate_password_hash(guest_password),
     active=True,
     created_datatime=now_in_utc(),
     last_login=now_in_utc()
@@ -96,18 +105,20 @@ def upgrade() -> None:
     op.bulk_insert(roles_table, [guest_role, admin_role])
     op.bulk_insert(users_table, [admin_user, guest_user])
     connection = op.get_bind()
-    admin_user_id = connection.execute(sa.select([users_table.c.id]).where(users_table.c.username == 'admin')).fetchone()[0]
-    user_user_id = connection.execute(sa.select([users_table.c.id]).where(users_table.c.username == 'guest')).fetchone()[0]
 
-    admin_role_id = connection.execute(sa.select([roles_table.c.id]).where(roles_table.c.name == 'admin')).fetchone()[0]
-    user_role_id = connection.execute(sa.select([roles_table.c.id]).where(roles_table.c.name == 'guest')).fetchone()[0]
+    session = Session(bind=connection)
+    admin_user_id = session.query(UserModel).filter_by(username=admin_user['username']).first().id
+    guest_user_id = session.query(UserModel).filter_by(username=guest_user['username']).first().id
+    admin_role_id = session.query(Role).filter_by(name=admin_role['name']).first().id
+    guest_role_id = session.query(Role).filter_by(name=guest_role['name']).first().id
+
     op.bulk_insert(
-            role_associations_table,
-            [
-                {'user_id': admin_user_id, 'role_id': admin_role_id},
-                {'user_id': user_user_id, 'role_id': user_role_id}
-            ]
-        )
+        role_associations_table,
+        [
+            {'user_id': admin_user_id, 'role_id': admin_role_id},
+            {'user_id': guest_user_id, 'role_id': guest_role_id}
+        ]
+    )
 
 
 def downgrade() -> None:
@@ -118,3 +129,4 @@ def downgrade() -> None:
     op.execute("DELETE FROM roles WHERE name IN ('admin', 'guest')")
 
     op.execute("DELETE FROM roles WHERE name IN ('admin', 'user')")
+

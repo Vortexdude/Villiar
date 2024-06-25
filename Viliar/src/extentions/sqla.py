@@ -3,6 +3,7 @@ from sqlalchemy.orm import DeclarativeBase, sessionmaker
 from sqlalchemy import inspect, create_engine
 from typing import Callable
 from Viliar.src.config import ConfigParser
+from sqlalchemy import MetaData
 
 DATABASE_URL = ConfigParser().database_uri
 engine = create_engine(DATABASE_URL)
@@ -19,7 +20,7 @@ def get_db():
 
 # Set up the flask-sqlalchemy extension for "new-style" models
 class Base(DeclarativeBase):
-    pass
+    metadata = MetaData(schema='public')
 
 
 db = SQLAlchemy(model_class=Base)
