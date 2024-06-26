@@ -23,7 +23,10 @@ def validate_headers(name='Authorization') -> tuple[str, str]:
     return token_type, token_data
 
 
-def login_required(omit_token=False):
+def login_required(omit_token=False, role_required=None):
+    if role_required is None:
+        role_required = []
+
     def main_wrapper(f: Callable):
         @wraps(f)
         def wrapper(*args, **kwargs):
@@ -35,10 +38,22 @@ def login_required(omit_token=False):
                     abort(401, description="Token is blacklisted please login again")
 
                 identity = jwt.decode(token_data)
-                current_user = UserModel.get_by_email(email=identity['identity'])
+                current_user = UserModel.get_by_email(email=identity['identity'], obj=True)
+                if not current_user:
+                    abort(401, description="Token in invalid")
+
                 if omit_token:
                     return f(*args, **kwargs, token=token_data)
-                return f(*args, **kwargs, current_user=current_user)
+
+                if role_required:
+                    for role in current_user.roles:
+                        if role.name not in role_required:
+                            if role.name == 'admin':
+                                return f(*args, **kwargs, current_user=current_user.to_dict())
+
+                            return {"Error": f"You dont have enough permission"}, 403
+
+                return f(*args, **kwargs, current_user=current_user.to_dict())
 
             except ExpiredSignatureError as e:
                 abort(401, description="Token expired or invalid")
@@ -114,28 +129,3 @@ class UserResource(object):
     @classmethod
     def update_data(cls, *args, **kwargs):
         return UserModel.update_data(*args, **kwargs)
-
-    @staticmethod
-    def create_admin():
-        admin_user = UserModel(
-            email="nitin@gmail.com",
-            username="nnamdev",
-            fullname="Nitin Namdev",
-            password="string",
-            active=True
-        )
-        admin_role = Role(
-            name="Admin",
-            description="Admin Role for Administrator Operations",
-            paths="/admin/*"
-        )
-        guest_role = Role(
-            name="Guest",
-            description="Guest Role for Normal Operations",
-            paths="/[!admin]*"
-        )
-        admin_user.roles.extend([admin_role, guest_role])
-        from Viliar.src.extentions.sqla import get_db
-        db = next(get_db())
-        db.add(admin_user)
-        db.commit()
