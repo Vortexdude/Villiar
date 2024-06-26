@@ -30,7 +30,6 @@ services:
       dockerfile: Dockerfile-DB
       args:
         dockerImage: postgres:13
-    container_name: Viliar-db
     ports:
       - "5432:5432"
     environment:

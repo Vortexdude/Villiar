@@ -15,8 +15,9 @@ It checks for a valid JWT token in the request headers and, optionally, verifies
 
 ### Routes
 
-1. GET /users/new
-2. GET /users/`username`
-3. POST /users/`username`
-4. POST /login
-5. POST /logout
+1. GET /me: Returns the current authenticated user
+2. GET /users/new - Registers a new user (admin only).
+3. GET /users/`username` - Fetches information for a specific user.
+4. POST /users/`username` - Updates information for a specific user.
+5. POST /login - Logs in a user and returns a JWT token.
+6. POST /logout - Logs out the user and invalidates the JWT token.
