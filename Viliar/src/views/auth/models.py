@@ -1,17 +1,10 @@
-from Viliar.src.extentions.sqla import HelperMethods, Base, get_db
+from Viliar.src.extentions.sqla import HelperMethods, Base, get_db, SurrogatePK, now_in_utc
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import String, Boolean, Table, Column, ForeignKey, DateTime
-from uuid import uuid4
-from datetime import datetime, UTC, date
+from datetime import datetime
 from typing import List, Optional, Any
 from sqlalchemy.exc import PendingRollbackError
 db = next(get_db())
-
-
-def now_in_utc() -> datetime:
-    """Current time in UTC"""
-    return datetime.now(tz=UTC)
-
 
 role_associations = Table(
     'role_associations',
@@ -21,13 +14,19 @@ role_associations = Table(
 )
 
 
-class SurrogatePK(Base):
-    __abstract__ = True
+class SurrogatePKExtended(SurrogatePK):
+    def save_to_db(self):
+        try:
+            db.add(self)
+            db.commit()
+        except PendingRollbackError:
+            db.rollback()
 
-    id: Mapped[str] = mapped_column(String, default=lambda: str(uuid4()), primary_key=True, nullable=False)
+        db.add(self)
+        db.commit()
 
 
-class Role(SurrogatePK, HelperMethods):
+class Role(SurrogatePKExtended, HelperMethods):
     __tablename__ = 'roles'
 
     name: Mapped[str] = mapped_column(String(50))
@@ -44,7 +43,7 @@ class Role(SurrogatePK, HelperMethods):
         self.paths = paths
 
 
-class UserModel(SurrogatePK, HelperMethods):
+class UserModel(SurrogatePKExtended, HelperMethods):
     __tablename__ = 'users'
 
     username: Mapped[str] = mapped_column(String(50), nullable=False, unique=True)
@@ -86,16 +85,6 @@ class UserModel(SurrogatePK, HelperMethods):
             return user if obj else user.to_dict(populate_pass)
         else:
             return {}
-
-    def save_to_db(self):
-        try:
-            db.add(self)
-            db.commit()
-        except PendingRollbackError:
-            db.rollback()
-
-        db.add(self)
-        db.commit()
 
     @classmethod
     def login(cls, email):

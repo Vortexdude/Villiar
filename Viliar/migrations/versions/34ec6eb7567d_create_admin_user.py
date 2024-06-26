@@ -13,7 +13,7 @@ from datetime import datetime, UTC
 from sqlalchemy.orm import Session
 from werkzeug.security import generate_password_hash
 from Viliar.src.views.auth.models import UserModel, Role
-
+from Viliar.src.config import conf
 
 # revision identifiers, used by Alembic.
 revision: str = '34ec6eb7567d'
@@ -21,9 +21,9 @@ down_revision: Union[str, None] = '8ee7e990a280'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
-config = context.get_context().config
-admin_password = config.get_main_option('admin_pass')
-guest_password = config.get_main_option('guest_pass')
+# config = context.get_context().config
+admin_password = conf.admin_pass
+guest_password = conf.guest_pass
 
 
 def now_in_utc() -> datetime:

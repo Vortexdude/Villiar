@@ -10,8 +10,7 @@ from Viliar.src.config import conf
 # access to the values within the .ini file in use.
 config = context.config
 config.set_main_option('sqlalchemy.url', conf.database_uri)
-config.set_main_option('admin_pass', conf.admin_pass)
-config.set_main_option('guest_pass', conf.guest_pass)
+
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
 if config.config_file_name is not None:

@@ -32,3 +32,7 @@ stop:
 
 connect:
 	@$(LOCAL_EXEC) "./scripts/docker --action $@ $(ARGS)"
+
+destroy:
+	@$(LOCAL_EXEC) "./scripts/docker --action $@ $(ARGS)"
+

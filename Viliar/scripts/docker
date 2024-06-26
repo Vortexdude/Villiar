@@ -48,6 +48,14 @@ case "$ACTION" in
     echo "Restarting docker containers"
     docker compose restart
     ;;
+  destroy)
+    echo "Stopping the container"
+    docker compose -f $docker_compose_file -f $docker_compose_overwrite\
+    down --remove-orphans
+    echo "Removing old postgres volume"
+    volume_name=$(docker volume ls | awk -F' ' '/postgres/ {print $2}')
+    docker volume rm $volume_name
+    ;;
   *)
     echo "Unknown arg..."
     ;;

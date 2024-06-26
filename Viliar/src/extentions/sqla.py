@@ -3,7 +3,10 @@ from sqlalchemy.orm import DeclarativeBase, sessionmaker
 from sqlalchemy import inspect, create_engine
 from typing import Callable
 from Viliar.src.config import ConfigParser
-from sqlalchemy import MetaData
+from sqlalchemy import MetaData, String
+from sqlalchemy.orm import Mapped, mapped_column
+from uuid import uuid4
+from datetime import datetime, UTC, date
 
 DATABASE_URL = ConfigParser().database_uri
 engine = create_engine(DATABASE_URL)
@@ -41,3 +44,14 @@ class HelperMethods:
         for k, v in data.items():
             setattr(self, k, v)
         return None
+
+
+class SurrogatePK(Base):
+    __abstract__ = True
+
+    id: Mapped[str] = mapped_column(String, default=lambda: str(uuid4()), primary_key=True, nullable=False)
+
+
+def now_in_utc() -> datetime:
+    """Current time in UTC"""
+    return datetime.now(tz=UTC)
