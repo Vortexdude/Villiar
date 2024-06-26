@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3"
 
 services:
   main:
@@ -19,6 +19,9 @@ services:
        DEBUG: ${DEBUG:-0}
        WORKER_COUNT: ${WORKER_COUNT:-2}
     depends_on:
+      db:
+        condition: service_healthy
+    links:
       - db
 
   db:
@@ -36,6 +39,11 @@ services:
       POSTGRES_DB: viliar
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U viliar"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
 volumes:
   postgres_data:
