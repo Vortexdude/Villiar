@@ -8,6 +8,8 @@ db = next(get_db())
 
 
 class SurrogatePKExtended(SurrogatePK):
+    __abstract__ = True
+
     def save_to_db(self):
         try:
             db.add(self)
