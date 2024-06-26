@@ -22,25 +22,9 @@ argparse "$@"
 decrypted_data=$(decrypt_data $secret_file $private_key)
 data_parser $decrypted_data
 
-function print_info() {
-    echo "HOST = $HOST"
-    echo "PORT = $PORT"
-    echo "DEBUG = $DEBUG"
-    echo "ACTION = $ACTION"
-    echo "CURDIR = $CURDIR"
-    echo "PKG_DIR_PATH = $PKG_DIR_PATH"
-    echo "PACKAGE_NAME = $PACKAGE_NAME"
-    echo "docker_file = $docker_file"
-    echo "docker_compose_file = $docker_compose_file"
-    echo "POSTGRES_DB = $POSTGRES_DB"
-    echo "POSTGRES_HOST = $POSTGRES_HOST"
-    [ ! -z $POSTGRES_PASSWORD ] && echo "POSTGRES_PASSWORD = ***" || echo "Password Not set"
-    echo "POSTGRES_USER = $POSTGRES_USER"
-    [ ! -z $JWT_SECRET_KEY ] && echo "JWT_SECRET_KEY = ***" || echo "Secret is Not set"
-}
-
 print_info
-# exit 1
+
+#docker exec Viliar-db psql -U viliar -c "create schema public;"
 
 case "$ACTION" in
   start)

@@ -50,8 +50,9 @@ function decrypt_data(){
 function encrypt_data(){
   local data_file=$1
   local public_key=$2
-  local output_file=$3
+  local output_file=${3:-./.secrets}
   [ ! -f "$data_file" ] && echo -e "[Error] Secret file $data_file doesnt exist" && exit 1
+  [ ! -f "$public_key" ] && echo -e "[Error] Public Key file $data_file doesnt exist" && exit 1
   openssl pkeyutl -encrypt -pubin -in $data_file -inkey $public_key | base64 > $output_file
 }
 
@@ -71,6 +72,10 @@ function argparse() {
             export ACTION="$2";
             shift
             ;;
+          --count )
+            export WORKER_COUNT="$2";
+            shift
+            ;;
           --host )
             export HOST="$2";
             shift
@@ -88,4 +93,22 @@ function argparse() {
         esac
         shift # move to the next key pair
     done
+}
+
+function print_info() {
+    echo "WORKER_COUNT = $WORKER_COUNT"
+    echo "HOST = $HOST"
+    echo "PORT = $PORT"
+    echo "DEBUG = $DEBUG"
+    echo "ACTION = $ACTION"
+    echo "CURDIR = $CURDIR"
+    echo "PKG_DIR_PATH = $PKG_DIR_PATH"
+    echo "PACKAGE_NAME = $PACKAGE_NAME"
+    echo "docker_file = $docker_file"
+    echo "docker_compose_file = $docker_compose_file"
+    echo "POSTGRES_DB = $POSTGRES_DB"
+    echo "POSTGRES_HOST = $POSTGRES_HOST"
+    [ ! -z $POSTGRES_PASSWORD ] && echo "POSTGRES_PASSWORD = ***" || echo "Password Not set"
+    echo "POSTGRES_USER = $POSTGRES_USER"
+    [ ! -z $JWT_SECRET_KEY ] && echo "JWT_SECRET_KEY = ***" || echo "Secret is Not set"
 }

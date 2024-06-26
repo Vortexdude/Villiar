@@ -14,6 +14,10 @@ ifneq ($(host),)
 ARGS += --host $(host)
 endif
 
+ifneq ($(count),)
+ARGS += --count $(count)
+endif
+
 all:
 	$(info Intialization ${PROJECT_NAME})
 

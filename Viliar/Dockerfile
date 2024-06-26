@@ -38,9 +38,9 @@ ENV PACKAGE_NAME=${packagename}
 ENV PACKAGE_DIR=${HOME}/${PACKAGE_NAME}
 RUN mkdir -p ${PACKAGE_DIR}
 
-COPY ${projectHomeDirpath}requirements.txt ${PACKAGE_DIR}/requirements.txt
+COPY ${projectHomeDirpath}requirements*.txt ${PACKAGE_DIR}/
 
-RUN pip3 install --no-cache-dir -r ${PACKAGE_DIR}/requirements.txt
+RUN pip3 install --no-cache-dir -r ${PACKAGE_DIR}/requirements-prod.txt
 
 # Copy application files
 

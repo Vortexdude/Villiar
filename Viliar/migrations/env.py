@@ -3,13 +3,15 @@ from Viliar.src.extentions.sqla import Base
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 from alembic import context
-from Viliar.src.config import ConfigParser
+from Viliar.src.config import conf
 
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
-config.set_main_option('sqlalchemy.url', ConfigParser().database_uri)
+config.set_main_option('sqlalchemy.url', conf.database_uri)
+config.set_main_option('admin_pass', conf.admin_pass)
+config.set_main_option('guest_pass', conf.guest_pass)
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
 if config.config_file_name is not None:
@@ -67,10 +69,14 @@ def run_migrations_online() -> None:
 
     with connectable.connect() as connection:
         context.configure(
-            connection=connection, target_metadata=target_metadata
+            connection=connection,
+            target_metadata=target_metadata,
+            version_table_schema=target_metadata.schema,
+            include_schemas=True
         )
 
         with context.begin_transaction():
+            context.execute('SET search_path TO public')
             context.run_migrations()
 
 

@@ -22,11 +22,7 @@ $VENV_PIP install --upgrade -q -r "$PACKAGE_DIR"requirements.txt
 
 ##### run alembic #####
 cd ${PACKAGE_NAME}
-alembic upgrade "$create_schema_hash"
-alembic upgrade "$data_injection_has"
-
-
-
+alembic upgrade head
 
 #pip3 install -r "$PACKAGE_DIR"requirements.txt
 

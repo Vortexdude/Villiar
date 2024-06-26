@@ -1,7 +1,6 @@
 from flask import Flask
 from .api import api
 from .sqla import db, Base
-from sqlalchemy import create_engine
 
 extensions = [api, db]
 

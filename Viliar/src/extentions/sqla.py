@@ -3,6 +3,7 @@ from sqlalchemy.orm import DeclarativeBase, sessionmaker
 from sqlalchemy import inspect, create_engine
 from typing import Callable
 from Viliar.src.config import ConfigParser
+from sqlalchemy import MetaData
 
 DATABASE_URL = ConfigParser().database_uri
 engine = create_engine(DATABASE_URL)
@@ -19,7 +20,7 @@ def get_db():
 
 # Set up the flask-sqlalchemy extension for "new-style" models
 class Base(DeclarativeBase):
-    pass
+    metadata = MetaData(schema='public')
 
 
 db = SQLAlchemy(model_class=Base)
@@ -28,9 +29,12 @@ db = SQLAlchemy(model_class=Base)
 class HelperMethods:
 
     # dynamically get all the attributes of a model
-    def to_dict(self) -> dict[str, str]:
+    def to_dict(self, populate_password=False) -> dict[str, str]:
         """Return a model as a dictionary."""
-        return {c.key: getattr(self, c.key) for c in inspect(self).mapper.column_attrs}
+        data = {c.key: getattr(self, c.key) for c in inspect(self).mapper.column_attrs}
+        if not populate_password and 'password' in data:
+            data.pop('password')
+        return data
 
     def update_with(self, data: dict[str, str]):
         """Update the data with given dict"""
