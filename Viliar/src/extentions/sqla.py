@@ -35,6 +35,9 @@ class HelperMethods:
     def to_dict(self, populate_password=False) -> dict[str, str]:
         """Return a model as a dictionary."""
         data = {c.key: getattr(self, c.key) for c in inspect(self).mapper.column_attrs}
+        keys_to_remove = [key for key in data.keys() if key.startswith("id") or key.endswith("id")]
+        for _key in keys_to_remove:
+            data.pop(_key)
         if not populate_password and 'password' in data:
             data.pop('password')
         return data
