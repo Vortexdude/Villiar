@@ -14,5 +14,4 @@ class EmployeeView(MethodView):
     def get(self):
         for employee in EmployeeResource.get_all():
             employee_dict = employee.to_dict()
-            print(employee_dict)
-        return {"data": "done"}
+            return employee_dict
