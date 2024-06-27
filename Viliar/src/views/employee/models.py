@@ -20,6 +20,10 @@ class SurrogatePKExtended(SurrogatePK):
         db.add(self)
         db.commit()
 
+    @classmethod
+    def get_all(cls) -> list:
+        return db.query(cls).all()
+
 
 class Employee(SurrogatePKExtended, HelperMethods):
     __tablename__ = "employees"
@@ -43,8 +47,12 @@ class Employee(SurrogatePKExtended, HelperMethods):
         self.salary = salary
         self.total_experience = total_experience
 
+    @classmethod
+    def get_by_name(cls, name) -> list:
+        return db.query(cls).filter_by(name=name).all()
+
     def __repr__(self):
-        return f"<Employee {self.name}, with salary of {self.salary} and experience {self.total_experience}>"
+        return f"<Employee {self.name}, with salary of {self.salary} and experience {self.total_experience} months>"
 
 
 class Address(SurrogatePKExtended):
@@ -76,10 +84,6 @@ class Designation(SurrogatePKExtended):
     def __init__(self, title, **kwargs):
         super().__init__(**kwargs)
         self.title = title
-
-    @classmethod
-    def get_all(cls) -> list:
-        return db.query(cls).all()
 
     @classmethod
     def get_by_name(cls, name):

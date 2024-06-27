@@ -44,6 +44,9 @@ class Role(SurrogatePKExtended, HelperMethods):
         self.description = description
         self.paths = paths
 
+    def __repr__(self):
+        return f"<Role {self.name} and description {self.description}>"
+
 
 class UserModel(SurrogatePKExtended, HelperMethods):
     __tablename__ = 'users'
@@ -71,6 +74,9 @@ class UserModel(SurrogatePKExtended, HelperMethods):
         self.email = email
         self.password = password
         self.active = active
+
+    def __repr__(self):
+        return f"<User {self.username} and email {self.email}>"
 
     @classmethod
     def get_by_email(cls, email, populate_pass=False, obj=False) -> object | dict:
