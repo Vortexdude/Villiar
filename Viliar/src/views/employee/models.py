@@ -77,6 +77,14 @@ class Designation(SurrogatePKExtended):
         super().__init__(**kwargs)
         self.title = title
 
+    @classmethod
+    def get_all(cls) -> list:
+        return db.query(cls).all()
+
+    @classmethod
+    def get_by_name(cls, name):
+        return db.query(cls).filter_by(title=name).first()
+
     def __repr__(self):
         return f"<Designation {self.title}>"
 
