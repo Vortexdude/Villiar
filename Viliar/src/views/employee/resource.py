@@ -20,3 +20,7 @@ class EmployeeResource:
         db.add_all([address, designation, employee])
         db.commit()
         return {"data": "inserted"}
+
+    @staticmethod
+    def get_all():
+        return Employee.get_all()

@@ -12,6 +12,7 @@ class EmployeeView(MethodView):
         return EmployeeResource(args).oboard()
 
     def get(self):
-        for employee in db.query(Employee).all():
-            print(employee.designation.title)
+        for employee in EmployeeResource.get_all():
+            employee_dict = employee.to_dict()
+            print(employee_dict)
         return {"data": "done"}
