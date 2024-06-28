@@ -1,7 +1,5 @@
-from sys import exception
-
 from .models import Designation, Address, Employee, db
-from Viliar.src.exceptions import UserAlreadyExistException, FormatterError, AttributeNotFound
+from Viliar.src.exceptions import UserAlreadyExistException, FormatterError, AttributeNotFound, UserNotExistException
 
 
 class ResourceMixing(object):
@@ -48,9 +46,9 @@ class EmployeeResource(ResourceMixing):
     def __init__(self, args):
         self.args = args
 
-    def oboard(self):
+    def oboard(self, name):
         try:
-            self._validate_employee()
+            self._validate_employee(name)
             address = self._extract_address()
             designation = self._extract_designation()
 
@@ -58,7 +56,7 @@ class EmployeeResource(ResourceMixing):
             return {"status": str(e)}, self._map_exception_with_status_code(e)
 
         employee = Employee(
-            name=self.args['name'],
+            name=name,
             salary=self.args['salary'],
             total_experience=self.args['total_experience'],
             address=address,
@@ -72,8 +70,43 @@ class EmployeeResource(ResourceMixing):
         except Exception as e:
             return {"Status": f"Error with {e}"}
 
-    def _validate_employee(self):
-        self._emp_validator(self.args['name'])
+    def update(self, name):
+        try:
+            emp = self._get_record_by_name(name)
+        except UserNotExistException as e:
+            return {"Status": f"Error with {e}"}, 404
+
+        emp.salary = self.args.get('salary', emp.salary)
+        emp.total_experience = self.args.get('total_experience', emp.total_experience)
+        if self.args.get('designation', None):
+            try:
+                emp.designation = self._designation_extractor(self.args.get('designation', None))
+            except AttributeNotFound as e:
+                {"status": str(e)}, self._map_exception_with_status_code(e)
+
+        emp.address = self.args.get('address', emp.address)
+
+        db.add(emp)
+        try:
+            db.commit()
+            return {"data": "Data Updated successfully."}, 201
+
+        except Exception as e:
+            return {"Status": f"Error with {e}"}
+
+    @classmethod
+    def discard(cls, name):
+        try:
+            employee = cls._get_record_by_name(name)
+            db.delete(employee)
+            db.commit()
+            return {"Status": "Record deleted successfully"}, 203
+
+        except UserNotExistException as e:
+            return {"Error": e}
+
+    def _validate_employee(self, name):
+        self._emp_validator(name)
 
     def _extract_address(self):
         return self._address_extractor(self.args['address'])
@@ -82,8 +115,15 @@ class EmployeeResource(ResourceMixing):
         return self._designation_extractor(self.args['designation'])
 
     @staticmethod
-    def get_all():
-        employees = Employee.get_all()
-        if not employees:
-            return {"Status": "No employee onboarded"}, 404
-        return {"emp": [employee.to_dict() for employee in employees]}, 200
+    def _get_record_by_name(name) -> Employee:
+        emp = Employee.get_by_name(name)
+        if not emp:
+            raise UserNotExistException()
+        return emp
+
+    @staticmethod
+    def get_one(name):
+        employee = Employee.get_by_name(name)
+        if not employee:
+            return {"Status": "Employee not found"}, 404
+        return employee.to_dict(), 200

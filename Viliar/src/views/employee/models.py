@@ -48,8 +48,8 @@ class Employee(SurrogatePKExtended, HelperMethods):
         self.total_experience = total_experience
 
     @classmethod
-    def get_by_name(cls, name) -> list:
-        return db.query(cls).filter_by(name=name).all()
+    def get_by_name(cls, name):
+        return db.query(cls).filter_by(name=name).first()
 
     def __repr__(self):
         return f"<Employee {self.name}, with salary of {self.salary} and experience {self.total_experience} months>"

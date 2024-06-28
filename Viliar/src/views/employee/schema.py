@@ -14,8 +14,14 @@ class EmployeeSchema(SQLAlchemyAutoSchema):
 
 
 class EmployeeOnboardSchema(Schema):
-    name = fields.String(required=True)
     salary = fields.Integer(required=True)
     total_experience = fields.Integer(required=True)
     designation = fields.String(required=True)
     address = fields.String(required=True)
+
+
+class EmployeeUpdateSchema(Schema):
+    salary = fields.Integer(required=False)
+    total_experience = fields.Integer(required=False)
+    designation = fields.String(required=False)
+    address = fields.String(required=False)

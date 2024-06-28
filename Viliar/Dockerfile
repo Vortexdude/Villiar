@@ -1,15 +1,15 @@
 ARG dockerImage
 FROM ${dockerImage} AS base
 
-ENV HOME /root
-ENV PYTHONPATH=${HOME}
+ENV HOME=/app
 ENV USER python
 ENV PYTHONUNBUFFERED=1
 ENV HOST=${HOST}
 ENV PORT=${PORT}
 ENV DEBUG=${DEBUG}
 RUN adduser --system --no-create-home python
-WORKDIR /app
+WORKDIR ${HOME}
+ENV PYTHONPATH=${HOME}
 #USER python
 
 

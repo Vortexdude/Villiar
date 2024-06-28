@@ -25,6 +25,12 @@ class UserAlreadyExistException(Exception):
         super().__init__("User already exists")
 
 
+class UserNotExistException(Exception):
+
+    def __init__(self):
+        super().__init__("User not exists")
+
+
 class FormatterError(Exception):
     def __init__(self):
         super().__init__("Address must be in formatted manner")
