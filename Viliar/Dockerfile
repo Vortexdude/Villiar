@@ -1,5 +1,5 @@
 ARG dockerImage
-FROM ${dockerImage} as base
+FROM ${dockerImage} AS base
 
 ENV HOME /root
 ENV PYTHONPATH=${HOME}
@@ -29,7 +29,7 @@ RUN pip install psycopg2
 # LAYER 1 CUSTOMIZATIONS
 # -----------------------------
 
-FROM base as layer1
+FROM base AS layer1
 
 # Define build arguments and environment variables
 ARG projectHomeDirpath

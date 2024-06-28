@@ -1,4 +1,4 @@
 ARG dockerImage
-FROM ${dockerImage} as db
+FROM ${dockerImage} AS db
 
 COPY ./scripts/init-db.sh /docker-entrypoint-initdb.d/
