@@ -34,7 +34,9 @@ class FetchUsersViews(MethodView):
         if not username:
             return jsonify({"message": "Please provide the username"}, 203)
         users: dict = UserResource.get_by_username(username)
-        return jsonify({"User": users})
+        if not users:
+            return jsonify({"User": users}), 201
+        return jsonify({"User": users}, 200)
 
     @blp.arguments(UserUpdateSchema)
     @login_required()
