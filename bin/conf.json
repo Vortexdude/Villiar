@@ -1,0 +1,14 @@
+{
+  "servers": [
+    {
+      "name": "remote_server",
+      "ssh_username": "ubuntu",
+      "ssh_host": "127.0.0.1",
+      "ssh_key": "/home/user/.ssh/id_rsa",
+      "local_directories": [
+        "/file2", "/file1"
+      ],
+      "remote_path": "/home/ubuntu/"
+    }
+  ]
+}
